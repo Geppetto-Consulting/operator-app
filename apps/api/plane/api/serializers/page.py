@@ -12,6 +12,44 @@ from plane.db.models import Page, Project, ProjectPage
 from plane.utils.content_validator import validate_html_content
 
 
+class LinkedPageSerializer(BaseSerializer):
+    """Minimal Page payload for the issue-linked-pages reverse lookup.
+
+    Distinct from ``PageAPISerializer``: drops HTML / JSON description and
+    ownership / external-id fields. Used by ``IssueLinkedPagesAPIEndpoint`` to
+    surface "which pages mention this issue?" in MCP read_docs and the issue
+    detail sidebar — neither of which needs the heavy content payload.
+    """
+
+    project_id = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Page
+        fields = [
+            "id",
+            "name",
+            "project_id",
+            "workspace",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = fields
+
+    def get_project_id(self, obj):
+        """Return the project id this page is attached to in the current request scope.
+
+        Pages can theoretically attach to multiple projects via ``ProjectPage``;
+        the linked-pages endpoint is scoped to a single project (the issue's
+        project), so we surface that scope rather than the entire M2M.
+        """
+        project_id = self.context.get("project_id")
+        if project_id:
+            return str(project_id)
+        # Fall back to the first attached project (deterministic but ambiguous)
+        first = obj.projects.values_list("id", flat=True).first()
+        return str(first) if first else None
+
+
 class PageAPISerializer(BaseSerializer):
     """
     Public REST API serializer for Pages.

@@ -2,6 +2,9 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
+# Django imports
+from django.db import transaction
+
 # Third party imports
 from rest_framework import status
 from rest_framework.response import Response
@@ -12,6 +15,7 @@ from drf_spectacular.utils import OpenApiResponse, OpenApiRequest
 # Module imports
 from plane.api.serializers import PageAPISerializer
 from plane.app.permissions import ProjectEntityPermission
+from plane.bgtasks.page_transaction_task import page_transaction
 from plane.db.models import Page, Project, ProjectPage
 from .base import BaseAPIView
 from plane.utils.openapi import (
@@ -159,6 +163,25 @@ class PageListCreateAPIEndpoint(BaseAPIView):
         )
         if serializer.is_valid():
             serializer.save()
+            # Capture the page transaction so PageLog tracks mentions / embeds.
+            # Mirrors the internal PageViewSet.create — without this hop, pages
+            # created via the public API would never populate PageLog, breaking
+            # the reverse-lookup that Phase 8 (ENG-120) depends on.
+            # Dispatched via transaction.on_commit(robust=True) so a broker
+            # outage absorbs as a swallowed log rather than a 5xx (matches the
+            # project / label / etc. dispatch pattern across the public API).
+            new_html = request.data.get("description_html", "<p></p>")
+            page_id = str(serializer.data["id"])
+
+            def _dispatch_page_transaction_create():
+                page_transaction.delay(
+                    new_description_html=new_html,
+                    old_description_html=None,
+                    page_id=page_id,
+                )
+
+            transaction.on_commit(_dispatch_page_transaction_create, robust=True)
+
             page = self.get_queryset().get(pk=serializer.data["id"])
             return Response(
                 PageAPISerializer(page).data,
@@ -254,9 +277,28 @@ class PageDetailAPIEndpoint(BaseAPIView):
                 status=status.HTTP_409_CONFLICT,
             )
 
+        # Snapshot the pre-update description so page_transaction can diff
+        # the mention components and write the delta to PageLog.
+        previous_description_html = page.description_html
+
         serializer = PageAPISerializer(page, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
+            # Only fire page_transaction when the description actually changed,
+            # mirroring the internal PageViewSet.partial_update. Dispatched via
+            # on_commit(robust=True) so broker failures absorb cleanly.
+            if request.data.get("description_html") is not None:
+                new_html = request.data.get("description_html", "<p></p>")
+                page_pk = str(page.id)
+
+                def _dispatch_page_transaction_update():
+                    page_transaction.delay(
+                        new_description_html=new_html,
+                        old_description_html=previous_description_html,
+                        page_id=page_pk,
+                    )
+
+                transaction.on_commit(_dispatch_page_transaction_update, robust=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

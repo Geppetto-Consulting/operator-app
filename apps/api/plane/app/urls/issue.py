@@ -8,6 +8,7 @@ from plane.app.views import (
     BulkCreateIssueLabelsEndpoint,
     BulkDeleteIssuesEndpoint,
     SubIssuesEndpoint,
+    IssueLinkedPagesEndpoint,
     IssueLinkViewSet,
     IssueAttachmentEndpoint,
     CommentReactionViewSet,
@@ -243,6 +244,13 @@ urlpatterns = [
         name="issue-relation",
     ),
     ## End Issue Relation
+    ## Linked Pages (reverse-lookup: pages mentioning this issue)
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/issues/<uuid:issue_id>/linked-pages/",
+        IssueLinkedPagesEndpoint.as_view(),
+        name="issue-linked-pages",
+    ),
+    ## End Linked Pages
     path(
         "workspaces/<str:slug>/projects/<uuid:project_id>/deleted-issues/",
         DeletedIssuesListViewSet.as_view(),
