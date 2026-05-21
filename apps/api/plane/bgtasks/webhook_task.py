@@ -19,7 +19,7 @@ from django.conf import settings
 from django.db.models import Prefetch
 from django.core.mail import EmailMultiAlternatives, get_connection
 from django.core.serializers.json import DjangoJSONEncoder
-from plane.utils.brand_context import render_email_template
+from plane.utils.brand_context import render_email_template, workspace_brand_context
 from django.core.exceptions import ObjectDoesNotExist
 
 # Module imports
@@ -221,6 +221,10 @@ def send_webhook_deactivation_email(webhook_id: str, receiver_id: str, current_s
             "email": receiver.email,
             "message": message,
             "webhook_url": f"{current_site}/{str(webhook.workspace.slug)}/settings/webhooks/{str(webhook.id)}",
+            # [ours: brand] ENG-154 — webhook-deactivate emails are sent on
+            # behalf of a workspace; splat per-workspace brand context so the
+            # branded header / wordmark match other transactional emails.
+            **workspace_brand_context(webhook.workspace),
         }
         html_content = render_email_template("emails/notifications/webhook-deactivate.html", context)
         text_content = generate_plain_text_from_html(html_content)
