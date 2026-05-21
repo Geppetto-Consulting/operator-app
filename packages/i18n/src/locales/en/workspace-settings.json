@@ -73,6 +73,11 @@
         "free_plan": "You are currently using the free plan",
         "view_plans": "View plans"
       },
+      "branding": {
+        "title": "Branding",
+        "heading": "Branding",
+        "description": "Customise this workspace's logo, brand colour, and product name override. Applies to the UI and to transactional emails sent from this workspace."
+      },
       "exports": {
         "heading": "Exports",
         "description": "Export your project data in various formats and access your export history with download links.",

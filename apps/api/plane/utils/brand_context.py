@@ -15,7 +15,43 @@ BRAND_CONTEXT_DEFAULTS = {
     "marketing_url": "https://promptable.co.uk",
     "docs_url": "https://promptable.co.uk/docs",
     "support_email": "support@promptable.co.uk",
+    # [ours: brand] Phase 2 (ENG-114) — operator-default brand colour + logo.
+    # `brand_color` is an oklch() string; templates inline it as a CSS color and
+    # the document <head> reads it for the runtime CSS-var override on the web
+    # app. `brand_logo_url` may be None — templates SHOULD fall back to the text
+    # `brand_name` when no logo is set.
+    "brand_color": "oklch(0.4799 0.1158 242.91)",
+    "brand_logo_url": None,
 }
+
+
+def workspace_brand_context(workspace) -> dict:
+    """Resolve brand-context overrides for a single workspace.
+
+    Phase 2 (ENG-114) per-workspace branding seam. Reads ``brand_color``,
+    ``brand_name_override`` and the existing ``logo_url`` property from the
+    Workspace row, falling back to ``BRAND_CONTEXT_DEFAULTS`` whenever a
+    workspace-level value is unset (``None`` or empty string). Returns a dict
+    suitable for splatting into ``render_email_template`` context.
+
+    Args:
+        workspace: A ``plane.db.models.Workspace`` instance, or ``None``. When
+            ``None`` (e.g. system emails not bound to a workspace), the function
+            returns an empty dict so callers can splat unconditionally.
+
+    Returns:
+        dict: Brand keys (``brand_name``, ``brand_color``, ``brand_logo_url``)
+        populated from the workspace override OR from the operator defaults.
+    """
+    if workspace is None:
+        return {}
+    return {
+        "brand_name": workspace.brand_name_override or BRAND_CONTEXT_DEFAULTS["brand_name"],
+        "brand_color": workspace.brand_color or BRAND_CONTEXT_DEFAULTS["brand_color"],
+        # Workspace.logo_url is a @property that resolves logo_asset (S3) OR the
+        # legacy textual ``logo`` field, returning None when neither is set.
+        "brand_logo_url": workspace.logo_url or BRAND_CONTEXT_DEFAULTS["brand_logo_url"],
+    }
 
 
 def render_email_template(template_name, context=None):

@@ -15,7 +15,8 @@
         <table style="width: 600px" cellspacing="0">
           <tr>
             <td>
-              <div style="margin-left: 30px; margin-bottom: 20px; margin-top: 20px" > <img src="https://media.docs.plane.so/logo/new-logo-white.png" width="150" border="0" /> </div>
+              {# [ours: brand] ENG-114 — per-workspace logo with text fallback. #}
+              <div style="margin-left: 30px; margin-bottom: 20px; margin-top: 20px" >{% if brand_logo_url %} <img src="{{ brand_logo_url }}" width="150" border="0" alt="{{ brand_name }}" /> {% else %}<span style="color: #1f2937; font-size: 18px; font-weight: 600;">{{ brand_name }}</span>{% endif %}</div>
             </td>
           </tr>
         </table>

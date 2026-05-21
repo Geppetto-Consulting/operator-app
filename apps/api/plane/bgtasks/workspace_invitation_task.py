@@ -10,7 +10,7 @@ from celery import shared_task
 
 # Django imports
 from django.core.mail import EmailMultiAlternatives, get_connection
-from plane.utils.brand_context import render_email_template
+from plane.utils.brand_context import render_email_template, workspace_brand_context
 
 # Module imports
 from plane.db.models import User, Workspace, WorkspaceMemberInvite
@@ -53,6 +53,9 @@ def workspace_invitation(email, workspace_id, token, current_site, inviter):
             "first_name": user.first_name or user.display_name or user.email,
             "workspace_name": workspace.name,
             "abs_url": abs_url,
+            # [ours: brand] ENG-114 — workspace-level branding (colour, logo,
+            # optional name override) takes precedence over operator defaults.
+            **workspace_brand_context(workspace),
         }
 
         html_content = render_email_template("emails/invitations/workspace_invitation.html", context)

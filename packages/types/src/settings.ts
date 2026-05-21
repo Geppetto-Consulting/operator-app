@@ -10,7 +10,9 @@ import type { EUserWorkspaceRoles } from "./workspace";
 
 export type TProfileSettingsTabs = "general" | "preferences" | "notifications" | "security" | "api-tokens";
 
-export type TWorkspaceSettingsTabs = "general" | "members" | "billing-and-plans" | "export" | "webhooks";
+// [ours: brand] ENG-114 — "branding" tab added for per-workspace brand
+// customisation (logo + colour + name override).
+export type TWorkspaceSettingsTabs = "general" | "members" | "billing-and-plans" | "export" | "webhooks" | "branding";
 export type TWorkspaceSettingsItem = {
   key: TWorkspaceSettingsTabs;
   i18n_label: string;

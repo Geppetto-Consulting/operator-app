@@ -62,6 +62,14 @@ export const WORKSPACE_SETTINGS: Record<TWorkspaceSettingsTabs, TWorkspaceSettin
     access: [EUserWorkspaceRoles.ADMIN],
     highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/settings/webhooks/`,
   },
+  // [ours: brand] ENG-114 / Phase 2 — per-workspace brand customisation.
+  branding: {
+    key: "branding",
+    i18n_label: "workspace_settings.settings.branding.title",
+    href: `/settings/branding`,
+    access: [EUserWorkspaceRoles.ADMIN],
+    highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/settings/branding/`,
+  },
 };
 
 export const WORKSPACE_SETTINGS_ACCESS = Object.fromEntries(
@@ -74,6 +82,9 @@ export const GROUPED_WORKSPACE_SETTINGS: Record<WORKSPACE_SETTINGS_CATEGORY, TWo
     WORKSPACE_SETTINGS["members"],
     WORKSPACE_SETTINGS["billing-and-plans"],
     WORKSPACE_SETTINGS["export"],
+    // [ours: brand] ENG-114 — Branding sits under administration alongside
+    // general / members / billing — it's an admin-only configuration surface.
+    WORKSPACE_SETTINGS["branding"],
   ],
   [WORKSPACE_SETTINGS_CATEGORY.FEATURES]: [],
   [WORKSPACE_SETTINGS_CATEGORY.DEVELOPER]: [WORKSPACE_SETTINGS["webhooks"]],
