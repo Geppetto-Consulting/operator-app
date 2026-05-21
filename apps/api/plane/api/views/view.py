@@ -168,9 +168,10 @@ class WorkspaceViewDetailAPIEndpoint(BaseAPIView):
     )
     def patch(self, request, slug, pk):
         """Update workspace view (owner only)."""
-        view = IssueView.objects.get(
-            pk=pk, workspace__slug=slug, project__isnull=True
-        )
+        # Route through get_queryset() so _visible_views_q applies — a user
+        # mutating a private view they can't see should get 404 (DoesNotExist),
+        # not 403. Returning 403 here leaks the existence of private views.
+        view = self.get_queryset().get(pk=pk)
 
         if view.is_locked:
             return Response(
@@ -198,10 +199,11 @@ class WorkspaceViewDetailAPIEndpoint(BaseAPIView):
     )
     def delete(self, request, slug, pk):
         """Delete workspace view (owner or workspace admin)."""
-        view = IssueView.objects.get(
-            pk=pk, workspace__slug=slug, project__isnull=True
-        )
-
+        # Workspace admins must be able to delete *any* view in their workspace
+        # (including private views they don't see in list). Non-admins are
+        # routed through get_queryset() so private views they can't see
+        # surface as 404 (DoesNotExist) rather than 403 — the latter leaks
+        # existence of private views to non-owners.
         is_admin = WorkspaceMember.objects.filter(
             workspace__slug=slug,
             member=request.user,
@@ -209,11 +211,17 @@ class WorkspaceViewDetailAPIEndpoint(BaseAPIView):
             is_active=True,
         ).exists()
 
-        if not is_admin and view.owned_by_id != request.user.id:
-            return Response(
-                {"error": "Only the owner or workspace admin can delete the view"},
-                status=status.HTTP_403_FORBIDDEN,
+        if is_admin:
+            view = IssueView.objects.get(
+                pk=pk, workspace__slug=slug, project__isnull=True
             )
+        else:
+            view = self.get_queryset().get(pk=pk)
+            if view.owned_by_id != request.user.id:
+                return Response(
+                    {"error": "Only the owner or workspace admin can delete the view"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
         view.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -355,9 +363,10 @@ class ProjectViewDetailAPIEndpoint(BaseAPIView):
     )
     def patch(self, request, slug, project_id, pk):
         """Update project view (owner only)."""
-        view = IssueView.objects.get(
-            pk=pk, workspace__slug=slug, project_id=project_id
-        )
+        # Route through get_queryset() so _visible_views_q applies — a user
+        # mutating a private view they can't see should get 404 (DoesNotExist),
+        # not 403. Returning 403 here leaks the existence of private views.
+        view = self.get_queryset().get(pk=pk)
 
         if view.is_locked:
             return Response(
@@ -385,10 +394,11 @@ class ProjectViewDetailAPIEndpoint(BaseAPIView):
     )
     def delete(self, request, slug, project_id, pk):
         """Delete project view (owner or project admin)."""
-        view = IssueView.objects.get(
-            pk=pk, workspace__slug=slug, project_id=project_id
-        )
-
+        # Project admins must be able to delete *any* view in their project
+        # (including private views they don't see in list). Non-admins are
+        # routed through get_queryset() so private views they can't see
+        # surface as 404 (DoesNotExist) rather than 403 — the latter leaks
+        # existence of private views to non-owners.
         is_admin = ProjectMember.objects.filter(
             workspace__slug=slug,
             project_id=project_id,
@@ -397,11 +407,17 @@ class ProjectViewDetailAPIEndpoint(BaseAPIView):
             is_active=True,
         ).exists()
 
-        if not is_admin and view.owned_by_id != request.user.id:
-            return Response(
-                {"error": "Only the owner or project admin can delete the view"},
-                status=status.HTTP_403_FORBIDDEN,
+        if is_admin:
+            view = IssueView.objects.get(
+                pk=pk, workspace__slug=slug, project_id=project_id
             )
+        else:
+            view = self.get_queryset().get(pk=pk)
+            if view.owned_by_id != request.user.id:
+                return Response(
+                    {"error": "Only the owner or project admin can delete the view"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
         view.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
