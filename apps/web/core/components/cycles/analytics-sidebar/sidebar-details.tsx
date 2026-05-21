@@ -20,6 +20,8 @@ import { getFileURL } from "@plane/utils";
 // hooks
 import { useProjectEstimates } from "@/hooks/store/estimates";
 import { useMember } from "@/hooks/store/use-member";
+// [ours: terminology] Operator fork — per-project label override (ENG-119)
+import { useProjectTerminology } from "@/hooks/use-project-terminology";
 // plane web constants
 
 type Props = {
@@ -33,6 +35,8 @@ export const CycleSidebarDetails = observer(function CycleSidebarDetails(props: 
   const { getUserDetails } = useMember();
   const { areEstimateEnabledByProjectId, currentActiveEstimateId, estimateById } = useProjectEstimates();
   const { t } = useTranslation();
+  // [ours: terminology] per-project label override (ENG-119)
+  const term = useProjectTerminology(projectId);
 
   const areEstimateEnabled = projectId && areEstimateEnabledByProjectId(projectId.toString());
   const cycleStatus = cycleDetails?.status?.toLocaleLowerCase();
@@ -41,10 +45,10 @@ export const CycleSidebarDetails = observer(function CycleSidebarDetails(props: 
   const issueCount =
     isCompleted && !isEmpty(cycleDetails?.progress_snapshot)
       ? cycleDetails?.progress_snapshot?.total_issues === 0
-        ? `0 ${t("common.work_item")}`
+        ? `0 ${term.singular}`
         : `${cycleDetails?.progress_snapshot?.completed_issues}/${cycleDetails?.progress_snapshot?.total_issues}`
       : cycleDetails?.total_issues === 0
-        ? `0 ${t("common.work_item")}`
+        ? `0 ${term.singular}`
         : `${cycleDetails?.completed_issues}/${cycleDetails?.total_issues}`;
   const estimateType = areEstimateEnabled && currentActiveEstimateId && estimateById(currentActiveEstimateId);
   const cycleOwnerDetails = cycleDetails ? getUserDetails(cycleDetails.owned_by_id) : undefined;
@@ -60,10 +64,10 @@ export const CycleSidebarDetails = observer(function CycleSidebarDetails(props: 
   const issueEstimatePointCount =
     isCompleted && !isEmpty(cycleDetails?.progress_snapshot)
       ? cycleDetails?.progress_snapshot.total_issues === 0
-        ? `0 ${t("common.work_item")}`
+        ? `0 ${term.singular}`
         : `${cycleDetails?.progress_snapshot.completed_estimate_points}/${cycleDetails?.progress_snapshot.total_estimate_points}`
       : cycleDetails?.total_issues === 0
-        ? `0 ${t("common.work_item")}`
+        ? `0 ${term.singular}`
         : `${cycleDetails?.completed_estimate_points}/${cycleDetails?.total_estimate_points}`;
   return (
     <div className="flex w-full flex-col gap-5">
@@ -122,7 +126,8 @@ export const CycleSidebarDetails = observer(function CycleSidebarDetails(props: 
         <div className="flex items-center justify-start gap-1">
           <div className="flex w-2/5 items-center justify-start gap-2 text-tertiary">
             <WorkItemsIcon className="h-4 w-4" />
-            <span className="text-14">{t("work_items")}</span>
+            {/* [ours: terminology] per-project plural (ENG-119) */}
+            <span className="text-14">{term.plural}</span>
           </div>
           <div className="flex w-3/5 items-center">
             <span className="px-1.5 text-13 text-tertiary">{issueCount}</span>

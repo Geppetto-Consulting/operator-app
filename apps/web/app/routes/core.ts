@@ -350,6 +350,11 @@ export const coreRoutes: RouteConfigEntry[] = [
                 "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/automations/page.tsx"
               ),
             ]),
+            // [ours: terminology] Operator fork — per-project terminology editor (ENG-119)
+            route(
+              ":workspaceSlug/settings/projects/:projectId/terminology",
+              "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/terminology/page.tsx"
+            ),
           ]),
         ]),
       ]),

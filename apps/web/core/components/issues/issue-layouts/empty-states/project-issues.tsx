@@ -15,6 +15,8 @@ import { EIssuesStoreType, EUserProjectRoles } from "@plane/types";
 import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useUserPermissions } from "@/hooks/store/user";
 import { useWorkItemFilterInstance } from "@/hooks/store/work-item-filters/use-work-item-filter-instance";
+// [ours: terminology] Operator fork — per-project label override (ENG-119)
+import { useProjectTerminology } from "@/hooks/use-project-terminology";
 
 export const ProjectEmptyState = observer(function ProjectEmptyState() {
   // router
@@ -22,6 +24,8 @@ export const ProjectEmptyState = observer(function ProjectEmptyState() {
   const projectId = routerProjectId ? routerProjectId.toString() : undefined;
   // plane imports
   const { t } = useTranslation();
+  // [ours: terminology] per-project label override (ENG-119)
+  const term = useProjectTerminology();
   // store hooks
   const { toggleCreateIssueModal } = useCommandPalette();
   const { allowPermissions } = useUserPermissions();
@@ -52,11 +56,12 @@ export const ProjectEmptyState = observer(function ProjectEmptyState() {
       ) : (
         <EmptyStateDetailed
           assetKey="work-item"
-          title={t("project_empty_state.work_items.title")}
-          description={t("project_empty_state.work_items.description")}
+          /* [ours: terminology] per-project labels for empty state (ENG-119) */
+          title={`Start with your first ${term.singular.toLowerCase()}.`}
+          description={`${term.plural} are the building blocks of your project — assign owners, set priorities, and track progress easily.`}
           actions={[
             {
-              label: t("project_empty_state.work_items.cta_primary"),
+              label: `Create your first ${term.singular.toLowerCase()}`,
               onClick: () => {
                 toggleCreateIssueModal(true, EIssuesStoreType.PROJECT);
               },

@@ -32,7 +32,9 @@ export type TProjectSettingsTabs =
   | "states"
   | "labels"
   | "estimates"
-  | "automations";
+  | "automations"
+  // [ours: terminology] Operator fork — per-project terminology editor (ENG-119)
+  | "terminology";
 export type TProjectSettingsItem = {
   key: TProjectSettingsTabs;
   i18n_label: string;

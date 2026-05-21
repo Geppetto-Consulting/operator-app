@@ -5,7 +5,7 @@
  */
 
 import type { LucideIcon } from "lucide-react";
-import { Users, Zap } from "lucide-react";
+import { Tag, Users, Zap } from "lucide-react";
 // plane imports
 import type { ISvgIcons } from "@plane/propel/icons";
 import {
@@ -34,4 +34,6 @@ export const PROJECT_SETTINGS_ICONS: Record<TProjectSettingsTabs, LucideIcon | R
   labels: LabelPropertyIcon,
   estimates: EstimatePropertyIcon,
   automations: Zap,
+  // [ours: terminology] Operator fork — per-project terminology editor icon (ENG-119)
+  terminology: Tag,
 };

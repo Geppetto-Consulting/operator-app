@@ -43,6 +43,8 @@ import { useProjectState } from "@/hooks/store/use-project-state";
 import { useWorkspaceDraftIssues } from "@/hooks/store/workspace-draft";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 import { useProjectIssueProperties } from "@/hooks/use-project-issue-properties";
+// [ours: terminology] Operator fork — per-project label override (ENG-119)
+import { useProjectTerminology } from "@/hooks/use-project-terminology";
 // plane web imports
 import { DeDupeButtonRoot } from "@/plane-web/components/de-dupe/de-dupe-button";
 import { DuplicateModalRoot } from "@/plane-web/components/de-dupe/duplicate-modal";
@@ -89,7 +91,7 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
     onCreateMoreToggleChange,
     isDraft,
     moveToIssue = false,
-    modalTitle = `${data?.id ? t("update") : isDraft ? t("create_a_draft") : t("create_new_issue")}`,
+    modalTitle: modalTitleProp,
     primaryButtonText = {
       default: `${data?.id ? t("update") : isDraft ? t("save_to_drafts") : t("save")}`,
       loading: `${data?.id ? t("updating") : t("saving")}`,
@@ -164,6 +166,10 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
   // derived values
   const projectDetails = projectId ? getProjectById(projectId) : undefined;
   const isDisabled = isSubmitting || isApplyingTemplate;
+  // [ours: terminology] resolve per-project label for modal title + primary button (ENG-119)
+  const term = useProjectTerminology(projectId);
+  const modalTitle =
+    modalTitleProp ?? `${data?.id ? t("update") : isDraft ? t("create_a_draft") : term.verb_create}`;
 
   const { getIndex } = getTabIndex(ETabIndices.ISSUE_FORM, isMobile);
 

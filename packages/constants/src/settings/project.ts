@@ -107,6 +107,14 @@ export const PROJECT_SETTINGS: Record<TProjectSettingsTabs, TProjectSettingsItem
     access: [EUserProjectRoles.ADMIN],
     highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/automations/`,
   },
+  // [ours: terminology] Operator fork — per-project terminology editor (ENG-119)
+  terminology: {
+    key: "terminology",
+    i18n_label: "project_settings.terminology.label",
+    href: `/terminology`,
+    access: [EUserProjectRoles.ADMIN],
+    highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/terminology/`,
+  },
 };
 
 export const PROJECT_SETTINGS_FLAT_MAP: TProjectSettingsItem[] = Object.values(PROJECT_SETTINGS);
@@ -124,6 +132,8 @@ export const GROUPED_PROJECT_SETTINGS: Record<PROJECT_SETTINGS_CATEGORY, TProjec
     PROJECT_SETTINGS["states"],
     PROJECT_SETTINGS["labels"],
     PROJECT_SETTINGS["estimates"],
+    // [ours: terminology] Operator fork — terminology editor sits under Work structure (ENG-119)
+    PROJECT_SETTINGS["terminology"],
   ],
   [PROJECT_SETTINGS_CATEGORY.EXECUTION]: [PROJECT_SETTINGS["automations"]],
 };
