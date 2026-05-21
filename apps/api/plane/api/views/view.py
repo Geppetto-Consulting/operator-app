@@ -8,7 +8,7 @@ from django.db.models import Q
 # Third party imports
 from rest_framework import status
 from rest_framework.response import Response
-from drf_spectacular.utils import extend_schema, OpenApiResponse
+from drf_spectacular.utils import OpenApiResponse
 
 # Module imports
 from plane.api.serializers import IssueViewAPISerializer
@@ -16,6 +16,12 @@ from plane.app.permissions import ProjectEntityPermission, WorkspaceEntityPermis
 from plane.db.models import IssueView, Workspace, WorkspaceMember, ProjectMember
 from .base import BaseAPIView
 from plane.utils.openapi import (
+    # [ours: api-decorators] ENG-152 — canonical @view_docs decorator
+    # (mirrors @page_docs / @state_docs / etc.) injects the Views tag,
+    # workspace-slug path parameter, and shared 401/403/404 responses.
+    view_docs,
+    PROJECT_ID_PARAMETER,
+    VIEW_ID_PARAMETER,
     CURSOR_PARAMETER,
     PER_PAGE_PARAMETER,
     FIELDS_PARAMETER,
@@ -63,11 +69,10 @@ class WorkspaceViewListCreateAPIEndpoint(BaseAPIView):
             .distinct()
         )
 
-    @extend_schema(
+    @view_docs(
         operation_id="list_workspace_views",
         summary="List workspace views",
         description="List saved workspace-level views visible to the requesting API key user. Includes public views and the user's own private views.",  # noqa: E501
-        tags=["Views"],
         parameters=[
             CURSOR_PARAMETER,
             PER_PAGE_PARAMETER,
@@ -93,11 +98,10 @@ class WorkspaceViewListCreateAPIEndpoint(BaseAPIView):
             ).data,
         )
 
-    @extend_schema(
+    @view_docs(
         operation_id="create_workspace_view",
         summary="Create workspace view",
         description="Create a new workspace-level saved view. `owned_by` is set from the API key's user.",
-        tags=["Views"],
         request=IssueViewAPISerializer,
         responses={
             201: OpenApiResponse(
@@ -134,11 +138,11 @@ class WorkspaceViewDetailAPIEndpoint(BaseAPIView):
             .distinct()
         )
 
-    @extend_schema(
+    @view_docs(
         operation_id="retrieve_workspace_view",
         summary="Retrieve workspace view",
         description="Retrieve a workspace-level saved view by id.",
-        tags=["Views"],
+        parameters=[VIEW_ID_PARAMETER, FIELDS_PARAMETER, EXPAND_PARAMETER],
         responses={
             200: OpenApiResponse(
                 description="View retrieved",
@@ -152,11 +156,11 @@ class WorkspaceViewDetailAPIEndpoint(BaseAPIView):
         serializer = IssueViewAPISerializer(view, fields=self.fields, expand=self.expand)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @extend_schema(
+    @view_docs(
         operation_id="update_workspace_view",
         summary="Update workspace view",
         description="Partially update a workspace-level saved view. Only the owner may update.",
-        tags=["Views"],
+        parameters=[VIEW_ID_PARAMETER],
         request=IssueViewAPISerializer,
         responses={
             200: OpenApiResponse(
@@ -190,11 +194,11 @@ class WorkspaceViewDetailAPIEndpoint(BaseAPIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @extend_schema(
+    @view_docs(
         operation_id="delete_workspace_view",
         summary="Delete workspace view",
         description="Delete a workspace-level saved view. Owner or workspace admin only.",
-        tags=["Views"],
+        parameters=[VIEW_ID_PARAMETER],
         responses={204: DELETED_RESPONSE},
     )
     def delete(self, request, slug, pk):
@@ -254,12 +258,12 @@ class ProjectViewListCreateAPIEndpoint(BaseAPIView):
             .distinct()
         )
 
-    @extend_schema(
+    @view_docs(
         operation_id="list_project_views",
         summary="List project views",
         description="List saved project-level views visible to the requesting API key user.",
-        tags=["Views"],
         parameters=[
+            PROJECT_ID_PARAMETER,
             CURSOR_PARAMETER,
             PER_PAGE_PARAMETER,
             FIELDS_PARAMETER,
@@ -284,11 +288,11 @@ class ProjectViewListCreateAPIEndpoint(BaseAPIView):
             ).data,
         )
 
-    @extend_schema(
+    @view_docs(
         operation_id="create_project_view",
         summary="Create project view",
         description="Create a new project-level saved view. `owned_by` is set from the API key's user.",
-        tags=["Views"],
+        parameters=[PROJECT_ID_PARAMETER],
         request=IssueViewAPISerializer,
         responses={
             201: OpenApiResponse(
@@ -329,11 +333,11 @@ class ProjectViewDetailAPIEndpoint(BaseAPIView):
             .distinct()
         )
 
-    @extend_schema(
+    @view_docs(
         operation_id="retrieve_project_view",
         summary="Retrieve project view",
         description="Retrieve a project-level saved view by id.",
-        tags=["Views"],
+        parameters=[PROJECT_ID_PARAMETER, VIEW_ID_PARAMETER, FIELDS_PARAMETER, EXPAND_PARAMETER],
         responses={
             200: OpenApiResponse(
                 description="View retrieved",
@@ -347,11 +351,11 @@ class ProjectViewDetailAPIEndpoint(BaseAPIView):
         serializer = IssueViewAPISerializer(view, fields=self.fields, expand=self.expand)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @extend_schema(
+    @view_docs(
         operation_id="update_project_view",
         summary="Update project view",
         description="Partially update a project-level saved view. Only the owner may update.",
-        tags=["Views"],
+        parameters=[PROJECT_ID_PARAMETER, VIEW_ID_PARAMETER],
         request=IssueViewAPISerializer,
         responses={
             200: OpenApiResponse(
@@ -385,11 +389,11 @@ class ProjectViewDetailAPIEndpoint(BaseAPIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @extend_schema(
+    @view_docs(
         operation_id="delete_project_view",
         summary="Delete project view",
         description="Delete a project-level saved view. Owner or project admin only.",
-        tags=["Views"],
+        parameters=[PROJECT_ID_PARAMETER, VIEW_ID_PARAMETER],
         responses={204: DELETED_RESPONSE},
     )
     def delete(self, request, slug, project_id, pk):

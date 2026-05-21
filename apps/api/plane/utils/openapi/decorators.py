@@ -298,6 +298,28 @@ def page_docs(**kwargs):
     return extend_schema(**_merge_schema_options(defaults, kwargs))
 
 
+def view_docs(**kwargs):
+    """Decorator for saved-view (IssueView) management endpoints.
+
+    [ours: api-decorators] ENG-152 — mirrors the @page_docs pattern from
+    ENG-115 so view.py keeps shape-parity with the other canonical
+    decorators. Defaults to the Views tag and the workspace-slug path
+    parameter; project_id is added per-endpoint where applicable since
+    saved views split workspace-level (project IS NULL) vs project-level.
+    """
+    defaults = {
+        "tags": ["Views"],
+        "parameters": [WORKSPACE_SLUG_PARAMETER],
+        "responses": {
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            404: NOT_FOUND_RESPONSE,
+        },
+    }
+
+    return extend_schema(**_merge_schema_options(defaults, kwargs))
+
+
 def sticky_docs(**kwargs):
     """Decorator for sticky management endpoints"""
     defaults = {
