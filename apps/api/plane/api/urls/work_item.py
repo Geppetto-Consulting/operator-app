@@ -7,6 +7,7 @@ from django.urls import path
 from plane.api.views import (
     IssueListCreateAPIEndpoint,
     IssueDetailAPIEndpoint,
+    IssueLinkedPagesAPIEndpoint,
     IssueLinkListCreateAPIEndpoint,
     IssueLinkDetailAPIEndpoint,
     IssueCommentListCreateAPIEndpoint,
@@ -82,6 +83,11 @@ old_url_patterns = [
         IssueAttachmentDetailAPIEndpoint.as_view(http_method_names=["get", "patch", "delete"]),
         name="issue-attachment",
     ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/issues/<uuid:issue_id>/linked-pages/",
+        IssueLinkedPagesAPIEndpoint.as_view(http_method_names=["get"]),
+        name="issue-linked-pages",
+    ),
 ]
 
 # New url patterns with work-items as the prefix
@@ -150,6 +156,11 @@ new_url_patterns = [
         "workspaces/<str:slug>/projects/<uuid:project_id>/work-items/<uuid:issue_id>/relations/",
         IssueRelationListCreateAPIEndpoint.as_view(http_method_names=["get", "post"]),
         name="work-item-relation-list",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/work-items/<uuid:issue_id>/linked-pages/",
+        IssueLinkedPagesAPIEndpoint.as_view(http_method_names=["get"]),
+        name="work-item-linked-pages",
     ),
 ]
 
