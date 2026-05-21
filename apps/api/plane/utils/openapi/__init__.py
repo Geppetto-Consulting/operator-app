@@ -29,6 +29,7 @@ from .parameters import (
     MODULE_PK_PARAMETER,
     ISSUE_ID_PARAMETER,
     STATE_ID_PARAMETER,
+    PAGE_ID_PARAMETER,
     LABEL_ID_PARAMETER,
     COMMENT_ID_PARAMETER,
     LINK_ID_PARAMETER,
@@ -173,6 +174,7 @@ from .decorators import (
     module_docs,
     module_issue_docs,
     state_docs,
+    page_docs,
     estimate_docs,
     estimate_point_docs,
 )
@@ -198,6 +200,7 @@ __all__ = [
     "MODULE_PK_PARAMETER",
     "ISSUE_ID_PARAMETER",
     "STATE_ID_PARAMETER",
+    "PAGE_ID_PARAMETER",
     "LABEL_ID_PARAMETER",
     "COMMENT_ID_PARAMETER",
     "LINK_ID_PARAMETER",
@@ -333,6 +336,7 @@ __all__ = [
     "module_docs",
     "module_issue_docs",
     "state_docs",
+    "page_docs",
     "estimate_docs",
     "estimate_point_docs",
     # Hooks

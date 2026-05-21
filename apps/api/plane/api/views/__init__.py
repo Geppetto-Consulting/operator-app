@@ -64,9 +64,15 @@ from .invite import WorkspaceInvitationsViewset
 
 from .sticky import StickyViewSet
 
+<<<<<<< HEAD
 from .view import (
     WorkspaceViewListCreateAPIEndpoint,
     WorkspaceViewDetailAPIEndpoint,
     ProjectViewListCreateAPIEndpoint,
     ProjectViewDetailAPIEndpoint,
+=======
+from .page import (
+    PageListCreateAPIEndpoint,
+    PageDetailAPIEndpoint,
+>>>>>>> origin/eng-115-public-api-pages
 )
