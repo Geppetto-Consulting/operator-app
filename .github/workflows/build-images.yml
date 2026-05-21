@@ -1,0 +1,117 @@
+name: Build & Push Operator-App Images
+
+# Fork-side CI for Geppetto-Consulting/operator-app.
+#
+# Builds the 6 deployable services Plane ships (api, web, admin, space, live,
+# proxy) and pushes them to GHCR under the operator-app-<service> namespace.
+#
+# Triggers:
+#   - push to main                  -> tag the digest as `main` (mutable)
+#   - push of `operator-app-v*` tag -> tag the digest as the SemVer (e.g. v0.1.0)
+#                                      AND as `latest` (also mutable)
+#
+# Auth: GitHub-provided GITHUB_TOKEN (no PATs). Workflow declares
+#       `packages: write` so the token can push to ghcr.io for this repo.
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'operator-app-v*'
+  workflow_dispatch: {}
+
+concurrency:
+  group: build-images-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  # Lowercase the owner; ghcr.io rejects mixed-case names.
+  IMAGE_OWNER: geppetto-consulting
+
+jobs:
+  build:
+    name: Build ${{ matrix.service }}
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: api
+            context: ./apps/api
+            dockerfile: ./apps/api/Dockerfile.api
+          - service: web
+            context: .
+            dockerfile: ./apps/web/Dockerfile.web
+          - service: admin
+            context: .
+            dockerfile: ./apps/admin/Dockerfile.admin
+          - service: space
+            context: .
+            dockerfile: ./apps/space/Dockerfile.space
+          - service: live
+            context: .
+            dockerfile: ./apps/live/Dockerfile.live
+          - service: proxy
+            context: ./apps/proxy
+            dockerfile: ./apps/proxy/Dockerfile.ce
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute image tags
+        id: tags
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+          IMAGE_BASE: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/operator-app-${{ matrix.service }}
+        run: |
+          set -euo pipefail
+          tags=()
+          if [ "$REF_TYPE" = "tag" ]; then
+            # Tag refs look like `operator-app-v0.1.0` — strip the `operator-app-` prefix
+            # so the published image tag is the SemVer (`v0.1.0`).
+            semver="${REF_NAME#operator-app-}"
+            tags+=("${IMAGE_BASE}:${semver}")
+            tags+=("${IMAGE_BASE}:latest")
+          else
+            # Branch push -> publish a mutable `<branch>` tag (e.g. `main`).
+            branch="${REF_NAME//\//-}"
+            tags+=("${IMAGE_BASE}:${branch}")
+          fi
+          {
+            echo "tags<<EOF"
+            printf '%s\n' "${tags[@]}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build & push ${{ matrix.service }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.tags.outputs.tags }}
+          platforms: linux/amd64
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+          provenance: false
