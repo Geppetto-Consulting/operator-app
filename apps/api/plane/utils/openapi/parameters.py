@@ -194,6 +194,24 @@ PAGE_ID_PARAMETER = OpenApiParameter(
     ],
 )
 
+# [ours: api-decorators] ENG-152 — saved-view ID path param, used by
+# WorkspaceViewDetailAPIEndpoint and ProjectViewDetailAPIEndpoint via
+# @view_docs (mirrors @page_docs from ENG-115).
+VIEW_ID_PARAMETER = OpenApiParameter(
+    name="pk",
+    description="View ID",
+    required=True,
+    type=OpenApiTypes.UUID,
+    location=OpenApiParameter.PATH,
+    examples=[
+        OpenApiExample(
+            name="Example view ID",
+            value="550e8400-e29b-41d4-a716-446655440000",
+            description="A typical saved-view UUID",
+        )
+    ],
+)
+
 # Additional Path Parameters
 LABEL_ID_PARAMETER = OpenApiParameter(
     name="pk",

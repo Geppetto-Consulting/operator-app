@@ -8,7 +8,7 @@ from django.db.models import Q
 # Third party imports
 from rest_framework import status
 from rest_framework.response import Response
-from drf_spectacular.utils import extend_schema, OpenApiResponse
+from drf_spectacular.utils import OpenApiResponse
 
 # Module imports
 from plane.api.serializers import IssueViewAPISerializer
@@ -16,6 +16,12 @@ from plane.app.permissions import ProjectEntityPermission, WorkspaceEntityPermis
 from plane.db.models import IssueView, Workspace, WorkspaceMember, ProjectMember
 from .base import BaseAPIView
 from plane.utils.openapi import (
+    # [ours: api-decorators] ENG-152 — canonical @view_docs decorator
+    # (mirrors @page_docs / @state_docs / etc.) injects the Views tag,
+    # workspace-slug path parameter, and shared 401/403/404 responses.
+    view_docs,
+    PROJECT_ID_PARAMETER,
+    VIEW_ID_PARAMETER,
     CURSOR_PARAMETER,
     PER_PAGE_PARAMETER,
     FIELDS_PARAMETER,
@@ -63,11 +69,10 @@ class WorkspaceViewListCreateAPIEndpoint(BaseAPIView):
             .distinct()
         )
 
-    @extend_schema(
+    @view_docs(
         operation_id="list_workspace_views",
         summary="List workspace views",
         description="List saved workspace-level views visible to the requesting API key user. Includes public views and the user's own private views.",  # noqa: E501
-        tags=["Views"],
         parameters=[
             CURSOR_PARAMETER,
             PER_PAGE_PARAMETER,
@@ -93,11 +98,10 @@ class WorkspaceViewListCreateAPIEndpoint(BaseAPIView):
             ).data,
         )
 
-    @extend_schema(
+    @view_docs(
         operation_id="create_workspace_view",
         summary="Create workspace view",
         description="Create a new workspace-level saved view. `owned_by` is set from the API key's user.",
-        tags=["Views"],
         request=IssueViewAPISerializer,
         responses={
             201: OpenApiResponse(
@@ -134,11 +138,11 @@ class WorkspaceViewDetailAPIEndpoint(BaseAPIView):
             .distinct()
         )
 
-    @extend_schema(
+    @view_docs(
         operation_id="retrieve_workspace_view",
         summary="Retrieve workspace view",
         description="Retrieve a workspace-level saved view by id.",
-        tags=["Views"],
+        parameters=[VIEW_ID_PARAMETER, FIELDS_PARAMETER, EXPAND_PARAMETER],
         responses={
             200: OpenApiResponse(
                 description="View retrieved",
@@ -152,11 +156,11 @@ class WorkspaceViewDetailAPIEndpoint(BaseAPIView):
         serializer = IssueViewAPISerializer(view, fields=self.fields, expand=self.expand)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @extend_schema(
+    @view_docs(
         operation_id="update_workspace_view",
         summary="Update workspace view",
         description="Partially update a workspace-level saved view. Only the owner may update.",
-        tags=["Views"],
+        parameters=[VIEW_ID_PARAMETER],
         request=IssueViewAPISerializer,
         responses={
             200: OpenApiResponse(
@@ -168,9 +172,10 @@ class WorkspaceViewDetailAPIEndpoint(BaseAPIView):
     )
     def patch(self, request, slug, pk):
         """Update workspace view (owner only)."""
-        view = IssueView.objects.get(
-            pk=pk, workspace__slug=slug, project__isnull=True
-        )
+        # Route through get_queryset() so _visible_views_q applies — a user
+        # mutating a private view they can't see should get 404 (DoesNotExist),
+        # not 403. Returning 403 here leaks the existence of private views.
+        view = self.get_queryset().get(pk=pk)
 
         if view.is_locked:
             return Response(
@@ -189,19 +194,20 @@ class WorkspaceViewDetailAPIEndpoint(BaseAPIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @extend_schema(
+    @view_docs(
         operation_id="delete_workspace_view",
         summary="Delete workspace view",
         description="Delete a workspace-level saved view. Owner or workspace admin only.",
-        tags=["Views"],
+        parameters=[VIEW_ID_PARAMETER],
         responses={204: DELETED_RESPONSE},
     )
     def delete(self, request, slug, pk):
         """Delete workspace view (owner or workspace admin)."""
-        view = IssueView.objects.get(
-            pk=pk, workspace__slug=slug, project__isnull=True
-        )
-
+        # Workspace admins must be able to delete *any* view in their workspace
+        # (including private views they don't see in list). Non-admins are
+        # routed through get_queryset() so private views they can't see
+        # surface as 404 (DoesNotExist) rather than 403 — the latter leaks
+        # existence of private views to non-owners.
         is_admin = WorkspaceMember.objects.filter(
             workspace__slug=slug,
             member=request.user,
@@ -209,11 +215,17 @@ class WorkspaceViewDetailAPIEndpoint(BaseAPIView):
             is_active=True,
         ).exists()
 
-        if not is_admin and view.owned_by_id != request.user.id:
-            return Response(
-                {"error": "Only the owner or workspace admin can delete the view"},
-                status=status.HTTP_403_FORBIDDEN,
+        if is_admin:
+            view = IssueView.objects.get(
+                pk=pk, workspace__slug=slug, project__isnull=True
             )
+        else:
+            view = self.get_queryset().get(pk=pk)
+            if view.owned_by_id != request.user.id:
+                return Response(
+                    {"error": "Only the owner or workspace admin can delete the view"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
         view.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -246,12 +258,12 @@ class ProjectViewListCreateAPIEndpoint(BaseAPIView):
             .distinct()
         )
 
-    @extend_schema(
+    @view_docs(
         operation_id="list_project_views",
         summary="List project views",
         description="List saved project-level views visible to the requesting API key user.",
-        tags=["Views"],
         parameters=[
+            PROJECT_ID_PARAMETER,
             CURSOR_PARAMETER,
             PER_PAGE_PARAMETER,
             FIELDS_PARAMETER,
@@ -276,11 +288,11 @@ class ProjectViewListCreateAPIEndpoint(BaseAPIView):
             ).data,
         )
 
-    @extend_schema(
+    @view_docs(
         operation_id="create_project_view",
         summary="Create project view",
         description="Create a new project-level saved view. `owned_by` is set from the API key's user.",
-        tags=["Views"],
+        parameters=[PROJECT_ID_PARAMETER],
         request=IssueViewAPISerializer,
         responses={
             201: OpenApiResponse(
@@ -321,11 +333,11 @@ class ProjectViewDetailAPIEndpoint(BaseAPIView):
             .distinct()
         )
 
-    @extend_schema(
+    @view_docs(
         operation_id="retrieve_project_view",
         summary="Retrieve project view",
         description="Retrieve a project-level saved view by id.",
-        tags=["Views"],
+        parameters=[PROJECT_ID_PARAMETER, VIEW_ID_PARAMETER, FIELDS_PARAMETER, EXPAND_PARAMETER],
         responses={
             200: OpenApiResponse(
                 description="View retrieved",
@@ -339,11 +351,11 @@ class ProjectViewDetailAPIEndpoint(BaseAPIView):
         serializer = IssueViewAPISerializer(view, fields=self.fields, expand=self.expand)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @extend_schema(
+    @view_docs(
         operation_id="update_project_view",
         summary="Update project view",
         description="Partially update a project-level saved view. Only the owner may update.",
-        tags=["Views"],
+        parameters=[PROJECT_ID_PARAMETER, VIEW_ID_PARAMETER],
         request=IssueViewAPISerializer,
         responses={
             200: OpenApiResponse(
@@ -355,9 +367,10 @@ class ProjectViewDetailAPIEndpoint(BaseAPIView):
     )
     def patch(self, request, slug, project_id, pk):
         """Update project view (owner only)."""
-        view = IssueView.objects.get(
-            pk=pk, workspace__slug=slug, project_id=project_id
-        )
+        # Route through get_queryset() so _visible_views_q applies — a user
+        # mutating a private view they can't see should get 404 (DoesNotExist),
+        # not 403. Returning 403 here leaks the existence of private views.
+        view = self.get_queryset().get(pk=pk)
 
         if view.is_locked:
             return Response(
@@ -376,19 +389,20 @@ class ProjectViewDetailAPIEndpoint(BaseAPIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @extend_schema(
+    @view_docs(
         operation_id="delete_project_view",
         summary="Delete project view",
         description="Delete a project-level saved view. Owner or project admin only.",
-        tags=["Views"],
+        parameters=[PROJECT_ID_PARAMETER, VIEW_ID_PARAMETER],
         responses={204: DELETED_RESPONSE},
     )
     def delete(self, request, slug, project_id, pk):
         """Delete project view (owner or project admin)."""
-        view = IssueView.objects.get(
-            pk=pk, workspace__slug=slug, project_id=project_id
-        )
-
+        # Project admins must be able to delete *any* view in their project
+        # (including private views they don't see in list). Non-admins are
+        # routed through get_queryset() so private views they can't see
+        # surface as 404 (DoesNotExist) rather than 403 — the latter leaks
+        # existence of private views to non-owners.
         is_admin = ProjectMember.objects.filter(
             workspace__slug=slug,
             project_id=project_id,
@@ -397,11 +411,17 @@ class ProjectViewDetailAPIEndpoint(BaseAPIView):
             is_active=True,
         ).exists()
 
-        if not is_admin and view.owned_by_id != request.user.id:
-            return Response(
-                {"error": "Only the owner or project admin can delete the view"},
-                status=status.HTTP_403_FORBIDDEN,
+        if is_admin:
+            view = IssueView.objects.get(
+                pk=pk, workspace__slug=slug, project_id=project_id
             )
+        else:
+            view = self.get_queryset().get(pk=pk)
+            if view.owned_by_id != request.user.id:
+                return Response(
+                    {"error": "Only the owner or project admin can delete the view"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
         view.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

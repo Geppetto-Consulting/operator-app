@@ -75,4 +75,6 @@ from .view import (
 from .page import (
     PageListCreateAPIEndpoint,
     PageDetailAPIEndpoint,
+    PageArchiveAPIEndpoint,
+    PageUnarchiveAPIEndpoint,
 )

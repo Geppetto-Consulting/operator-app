@@ -63,7 +63,7 @@ export const WorkspaceBranding = observer(function WorkspaceBranding() {
   const [isLoading, setIsLoading] = useState(false);
   const [isImageUploadModalOpen, setIsImageUploadModalOpen] = useState(false);
   // store hooks
-  const { currentWorkspace, updateWorkspace } = useWorkspace();
+  const { currentWorkspace, updateWorkspace, updateWorkspaceLogo } = useWorkspace();
   const { allowPermissions } = useUserPermissions();
 
   // form
@@ -126,8 +126,14 @@ export const WorkspaceBranding = observer(function WorkspaceBranding() {
 
   const handleRemoveLogo = async () => {
     if (!currentWorkspace) return;
+    // The WorkspaceImageUploadModal already deletes the underlying asset
+    // (`deleteWorkspaceAsset`) and the backend's `entity_asset_delete` clears
+    // `workspace.logo_asset_id`. `logo_url` is a read-only computed property
+    // on the serializer (resolves from the asset), so PATCH-ing it silently
+    // no-ops — we just refresh local store state so the UI reflects the now-
+    // null asset.
     try {
-      await updateWorkspace(currentWorkspace.slug, { logo_url: "" });
+      updateWorkspaceLogo(currentWorkspace.slug, "");
       setToast({
         type: TOAST_TYPE.SUCCESS,
         title: "Logo removed",

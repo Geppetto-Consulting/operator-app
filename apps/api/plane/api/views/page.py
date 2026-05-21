@@ -2,6 +2,9 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
+# Python imports
+from datetime import datetime
+
 # Django imports
 from django.db import transaction
 
@@ -15,8 +18,9 @@ from drf_spectacular.utils import OpenApiResponse, OpenApiRequest
 # Module imports
 from plane.api.serializers import PageAPISerializer
 from plane.app.permissions import ProjectEntityPermission
+from plane.app.views.page.base import unarchive_archive_page_and_descendants
 from plane.bgtasks.page_transaction_task import page_transaction
-from plane.db.models import Page, Project, ProjectPage
+from plane.db.models import Page, Project, ProjectPage, UserFavorite
 from .base import BaseAPIView
 from plane.utils.openapi import (
     page_docs,
@@ -319,6 +323,18 @@ class PageDetailAPIEndpoint(BaseAPIView):
 
         page = self.get_queryset().get(pk=pk)
 
+        # [ours: pages-api] ENG-153 — mirror the internal viewset's
+        # archive-before-DELETE invariant (see app/views/page/base.py:376-380).
+        # Hard-deleting an active page from the public API would diverge from
+        # the internal lifecycle and could orphan PageLog rows / favorites
+        # before the cleanup is staged. Callers must archive first (POST
+        # /pages/<pk>/archive/) — surfaces as 400 with a discoverable message.
+        if page.archived_at is None:
+            return Response(
+                {"error": "The page must be archived before deleting. POST to /pages/<id>/archive/ first."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         if page.owned_by_id != request.user.id and not ProjectMember.objects.filter(
             workspace__slug=slug,
             member=request.user,
@@ -334,4 +350,131 @@ class PageDetailAPIEndpoint(BaseAPIView):
         # Detach children to avoid CASCADE wiping unrelated descendants
         Page.objects.filter(parent_id=pk).update(parent=None)
         page.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PageArchiveAPIEndpoint(BaseAPIView):
+    """Page Archive / Unarchive Endpoint
+
+    [ours: pages-api] ENG-153 — mirror the internal archive/unarchive
+    lifecycle (app/views/page/base.py:308-366) on the public API so callers
+    have a path to satisfy the archive-before-DELETE invariant. POST archives;
+    POST to /unarchive/ unarchives. Both 200 with no body.
+    """
+
+    model = Page
+    serializer_class = PageAPISerializer
+    permission_classes = [ProjectEntityPermission]
+
+    def get_queryset(self):
+        return (
+            Page.objects.filter(workspace__slug=self.kwargs.get("slug"))
+            .filter(projects__id=self.kwargs.get("project_id"))
+            .filter(project_pages__deleted_at__isnull=True)
+            .select_related("workspace")
+            .select_related("owned_by")
+            .distinct()
+        )
+
+    @page_docs(
+        operation_id="archive_page",
+        summary="Archive page",
+        description=(
+            "Archive a page (and its descendants). The page must be archived "
+            "before it can be deleted via DELETE /pages/<id>/. Only the owner "
+            "or a project admin can archive."
+        ),
+        parameters=[PAGE_ID_PARAMETER],
+        responses={
+            200: OpenApiResponse(description="Page archived"),
+            400: INVALID_REQUEST_RESPONSE,
+            404: PROJECT_NOT_FOUND_RESPONSE,
+        },
+    )
+    def post(self, request, slug, project_id, pk):
+        """Archive a page."""
+        from plane.db.models import ProjectMember
+
+        page = self.get_queryset().get(pk=pk)
+
+        # Owner or admin only (matches internal viewset)
+        if (
+            ProjectMember.objects.filter(
+                project_id=project_id, member=request.user, is_active=True, role__lte=15
+            ).exists()
+            and request.user.id != page.owned_by_id
+        ):
+            return Response(
+                {"error": "Only the owner or admin can archive the page"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        UserFavorite.objects.filter(
+            entity_type="page",
+            entity_identifier=pk,
+            project_id=project_id,
+            workspace__slug=slug,
+        ).delete()
+
+        archived_at = datetime.now()
+        unarchive_archive_page_and_descendants(pk, archived_at)
+
+        return Response({"archived_at": str(archived_at)}, status=status.HTTP_200_OK)
+
+
+class PageUnarchiveAPIEndpoint(BaseAPIView):
+    """Page Unarchive Endpoint — companion to PageArchiveAPIEndpoint."""
+
+    model = Page
+    serializer_class = PageAPISerializer
+    permission_classes = [ProjectEntityPermission]
+
+    def get_queryset(self):
+        return (
+            Page.objects.filter(workspace__slug=self.kwargs.get("slug"))
+            .filter(projects__id=self.kwargs.get("project_id"))
+            .filter(project_pages__deleted_at__isnull=True)
+            .select_related("workspace")
+            .select_related("owned_by")
+            .distinct()
+        )
+
+    @page_docs(
+        operation_id="unarchive_page",
+        summary="Unarchive page",
+        description=(
+            "Unarchive a previously archived page. If the parent is itself "
+            "archived, the page is detached from its parent to preserve "
+            "hierarchy invariants. Only the owner or a project admin."
+        ),
+        parameters=[PAGE_ID_PARAMETER],
+        responses={
+            204: OpenApiResponse(description="Page unarchived"),
+            400: INVALID_REQUEST_RESPONSE,
+            404: PROJECT_NOT_FOUND_RESPONSE,
+        },
+    )
+    def post(self, request, slug, project_id, pk):
+        """Unarchive a page."""
+        from plane.db.models import ProjectMember
+
+        page = self.get_queryset().get(pk=pk)
+
+        if (
+            ProjectMember.objects.filter(
+                project_id=project_id, member=request.user, is_active=True, role__lte=15
+            ).exists()
+            and request.user.id != page.owned_by_id
+        ):
+            return Response(
+                {"error": "Only the owner or admin can unarchive the page"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # If parent is archived, breaking hierarchy — detach
+        if page.parent_id and page.parent.archived_at:
+            page.parent = None
+            page.save(update_fields=["parent"])
+
+        unarchive_archive_page_and_descendants(pk, None)
         return Response(status=status.HTTP_204_NO_CONTENT)
