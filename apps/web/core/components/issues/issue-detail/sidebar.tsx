@@ -45,6 +45,7 @@ import { IssueWorklogProperty } from "@/plane-web/components/issues/worklog/prop
 import { SidebarPropertyListItem } from "@/components/common/layout/sidebar/property-list-item";
 import { IssueCycleSelect } from "./cycle-select";
 import { IssueLabel } from "./label";
+import { IssueLinkedPages } from "./linked-pages";
 import { IssueModuleSelect } from "./module-select";
 import type { TIssueOperations } from "./root";
 
@@ -273,6 +274,14 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
               workspaceSlug={workspaceSlug}
               isEditable={isEditable}
             />
+          </div>
+
+          {/* Linked pages — pages that mention this work item via @-mention. */}
+          <div className="mt-6">
+            <h5 className="text-body-xs-medium">{t("common.linked_pages") || "Linked pages"}</h5>
+            <div className="mt-2 mb-4">
+              <IssueLinkedPages workspaceSlug={workspaceSlug} projectId={projectId} issueId={issueId} />
+            </div>
           </div>
         </div>
       </div>

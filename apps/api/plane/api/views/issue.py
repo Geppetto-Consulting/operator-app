@@ -57,6 +57,7 @@ from plane.api.serializers import (
     IssueLinkCreateSerializer,
     IssueLinkUpdateSerializer,
     LabelCreateUpdateSerializer,
+    LinkedPageSerializer,
     RelatedIssueSerializer,
 )
 from plane.app.permissions import (
@@ -73,6 +74,8 @@ from plane.db.models import (
     IssueLink,
     IssueRelation,
     Label,
+    Page,
+    PageLog,
     Project,
     ProjectMember,
     CycleIssue,
@@ -2540,3 +2543,92 @@ class IssueRelationListCreateAPIEndpoint(BaseAPIView):
             serializer_class(refetched_relations, many=True).data,
             status=status.HTTP_201_CREATED,
         )
+
+
+class IssueLinkedPagesAPIEndpoint(BaseAPIView):
+    """Linked Pages reverse-lookup endpoint.
+
+    Returns the set of Pages that mention this issue via a ``mention-component``
+    in their description. Resolution goes through ``PageLog`` rows where
+    ``entity_name="issue"`` and ``entity_identifier=<issue_uuid>`` — Plane's
+    existing entity-reference tracking table, populated by the
+    ``page_transaction`` Celery task on page save.
+
+    Permission shape mirrors the rest of the public Pages / Issues API
+    (``ProjectEntityPermission`` + x-api-key). Scoped to the page set that is
+    attached to the same project as the issue.
+    """
+
+    model = Page
+    serializer_class = LinkedPageSerializer
+    permission_classes = [ProjectEntityPermission]
+    use_read_replica = True
+
+    def get_queryset(self):
+        slug = self.kwargs.get("slug")
+        project_id = self.kwargs.get("project_id")
+        issue_id = self.kwargs.get("issue_id")
+
+        # PageLog rows scoped to the workspace -> page ids that mention the issue
+        page_ids = PageLog.objects.filter(
+            workspace__slug=slug,
+            entity_name="issue",
+            entity_identifier=issue_id,
+        ).values_list("page_id", flat=True)
+
+        return (
+            Page.objects.filter(pk__in=page_ids)
+                .filter(workspace__slug=slug)
+                # Only pages attached to the same project as the issue — keeps
+                # cross-project mention noise out of the reverse lookup.
+                .filter(projects__id=project_id)
+                .filter(project_pages__deleted_at__isnull=True)
+                .select_related("workspace")
+                .order_by("-created_at")
+                .distinct()
+        )
+
+    @extend_schema(
+        tags=["Work Items"],
+        operation_id="list_work_item_linked_pages",
+        summary="List pages linked to a work item",
+        description=(
+            "Retrieve pages that mention this work item via a ``mention-component`` "
+            "in their description. Reverse-lookup of the ``PageLog`` reference table."
+        ),
+        parameters=[
+            WORKSPACE_SLUG_PARAMETER,
+            PROJECT_ID_PARAMETER,
+            ISSUE_ID_PARAMETER,
+            FIELDS_PARAMETER,
+            EXPAND_PARAMETER,
+        ],
+        responses={
+            200: OpenApiResponse(
+                description="List of pages that mention this work item.",
+                response=LinkedPageSerializer(many=True),
+            ),
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            404: ISSUE_NOT_FOUND_RESPONSE,
+        },
+    )
+    def get(self, request, slug, project_id, issue_id):
+        """List pages linked to a work item."""
+        # Verify the issue actually exists in this project so we 404 rather
+        # than silently returning an empty list for a bad id.
+        Issue.issue_objects.get(
+            workspace__slug=slug,
+            project_id=project_id,
+            pk=issue_id,
+        )
+
+        queryset = self.get_queryset()
+        serializer = LinkedPageSerializer(
+            queryset,
+            many=True,
+            context={"project_id": str(project_id)},
+            fields=self.fields,
+            expand=self.expand,
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
