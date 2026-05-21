@@ -64,8 +64,5 @@ from .asset import (
 from .invite import WorkspaceInviteSerializer
 from .member import ProjectMemberSerializer
 from .sticky import StickySerializer
-<<<<<<< HEAD
 from .view import IssueViewAPISerializer
-=======
 from .page import PageAPISerializer
->>>>>>> origin/eng-115-public-api-pages
