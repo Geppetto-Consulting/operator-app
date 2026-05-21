@@ -326,9 +326,9 @@
       "cycles": {
         "title": "Zyklen",
         "short_title": "Zyklen",
-        "description": "Promptable Operatorn Sie die Arbeit in flexiblen Zeiträumen, die sich dem einzigartigen Rhythmus und Tempo dieses Projekts anpassen.",
+        "description": "Planen Sie die Arbeit in flexiblen Zeiträumen, die sich dem einzigartigen Rhythmus und Tempo dieses Projekts anpassen.",
         "toggle_title": "Zyklen aktivieren",
-        "toggle_description": "Promptable Operatorn Sie die Arbeit in fokussierten Zeiträumen."
+        "toggle_description": "Planen Sie die Arbeit in fokussierten Zeiträumen."
       },
       "modules": {
         "title": "Module",

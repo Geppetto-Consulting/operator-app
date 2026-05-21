@@ -66,9 +66,9 @@
         }
       },
       "billing_and_plans": {
-        "heading": "Facturación y Promptable Operators",
+        "heading": "Facturación y Planes",
         "description": "Elige tu plan, gestiona las suscripciones y actualiza fácilmente a medida que crecen tus necesidades.",
-        "title": "Facturación y Promptable Operators",
+        "title": "Facturación y Planes",
         "current_plan": "Plan actual",
         "free_plan": "Actualmente estás usando el plan gratuito",
         "view_plans": "Ver planes"
@@ -418,9 +418,9 @@
         "categories_error": "Las categorías son requeridas",
         "invalid_categories_error": "Categorías inválidas",
         "categories_description": "Selecciona las categorías que mejor describen la aplicación",
-        "supported_plans": "Promptable Operators Soportados",
+        "supported_plans": "Planes Soportados",
         "supported_plans_description": "Selecciona los planes de espacio de trabajo que pueden instalar esta aplicación. Deja vacío para permitir todos los planes.",
-        "select_plans": "Seleccionar Promptable Operators",
+        "select_plans": "Seleccionar Planes",
         "privacy_policy_url_title": "URL de la Política de Privacidad",
         "privacy_policy_url_error": "La URL de la Política de Privacidad es requerida",
         "invalid_privacy_policy_url_error": "URL de la Política de Privacidad inválida",
