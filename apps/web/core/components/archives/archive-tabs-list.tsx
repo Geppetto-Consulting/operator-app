@@ -11,17 +11,15 @@ import { useParams, usePathname } from "next/navigation";
 import type { IProject } from "@plane/types";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
+// [ours: terminology] project-aware tab label (ENG-157)
+import { useProjectTerminology } from "@/hooks/use-project-terminology";
 
+// [ours: terminology] `issues.label` resolved per-render via useProjectTerminology
 const ARCHIVES_TAB_LIST: {
   key: string;
   label: string;
   shouldRender: (projectDetails: IProject) => boolean;
 }[] = [
-  {
-    key: "issues",
-    label: "Work items",
-    shouldRender: () => true,
-  },
   {
     key: "cycles",
     label: "Cycles",
@@ -40,15 +38,23 @@ export const ArchiveTabsList = observer(function ArchiveTabsList() {
   const pathname = usePathname();
   // store hooks
   const { getProjectById } = useProject();
+  // [ours: terminology] resolve project terminology
+  const term = useProjectTerminology(projectId?.toString());
 
   // derived values
   if (!projectId) return null;
   const projectDetails = getProjectById(projectId?.toString());
   if (!projectDetails) return null;
 
+  // [ours: terminology] prepend issues tab with project-aware label
+  const tabs = [
+    { key: "issues", label: term.plural, shouldRender: () => true },
+    ...ARCHIVES_TAB_LIST,
+  ];
+
   return (
     <>
-      {ARCHIVES_TAB_LIST.map(
+      {tabs.map(
         (tab) =>
           tab.shouldRender(projectDetails) && (
             <Link key={tab.key} href={`/${workspaceSlug}/projects/${projectId}/archives/${tab.key}`}>

@@ -17,6 +17,8 @@ import { IssueDetailQuickActions } from "@/components/issues/issue-detail/issue-
 import { ISSUE_DETAILS } from "@/constants/fetch-keys";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
+// [ours: terminology] project-aware terminology for archived-issue breadcrumb (ENG-157)
+import { useProjectTerminology } from "@/hooks/use-project-terminology";
 // plane web
 import { ProjectBreadcrumb } from "@/plane-web/components/breadcrumbs/project";
 // services
@@ -29,6 +31,8 @@ export const ProjectArchivedIssueDetailsHeader = observer(function ProjectArchiv
   const { workspaceSlug, projectId, archivedIssueId } = useParams();
   // store hooks
   const { currentProjectDetails, loader } = useProject();
+  // [ours: terminology] resolve project terminology for breadcrumb
+  const term = useProjectTerminology(projectId?.toString());
 
   const { data: issueDetails } = useSWR(
     workspaceSlug && projectId && archivedIssueId ? ISSUE_DETAILS(archivedIssueId.toString()) : null,
@@ -55,7 +59,7 @@ export const ProjectArchivedIssueDetailsHeader = observer(function ProjectArchiv
             component={
               <BreadcrumbLink
                 href={`/${workspaceSlug}/projects/${projectId}/archives/issues`}
-                label="Work items"
+                label={term.plural}
                 icon={<WorkItemsIcon className="h-4 w-4 text-tertiary" />}
               />
             }

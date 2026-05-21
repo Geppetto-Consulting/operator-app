@@ -5,10 +5,14 @@
  */
 
 import { observer } from "mobx-react";
+// [ours: terminology] project-aware placeholder/validation copy (ENG-157)
+import { useProjectTerminology } from "@/hooks/use-project-terminology";
 import type { TQuickAddIssueForm } from "../root";
 
 export const CalendarQuickAddIssueForm = observer(function CalendarQuickAddIssueForm(props: TQuickAddIssueForm) {
   const { ref, isOpen, projectDetail, register, onSubmit, isEpic } = props;
+  // [ours: terminology] resolve term using projectDetail's project id
+  const term = useProjectTerminology(projectDetail?.id);
 
   return (
     <div
@@ -25,9 +29,9 @@ export const CalendarQuickAddIssueForm = observer(function CalendarQuickAddIssue
         <input
           type="text"
           autoComplete="off"
-          placeholder={isEpic ? "Epic Title" : "Work item Title"}
+          placeholder={isEpic ? "Epic Title" : `${term.singular} Title`}
           {...register("name", {
-            required: `${isEpic ? "Epic" : "Work item"} title is required.`,
+            required: `${isEpic ? "Epic" : term.singular} title is required.`,
           })}
           className="w-full rounded-md bg-transparent py-1.5 pr-2 text-13 leading-5 font-medium text-secondary outline-none md:text-11"
         />

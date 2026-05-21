@@ -25,6 +25,8 @@ import { ModuleProgressStats } from "@/components/modules";
 import { useProjectEstimates } from "@/hooks/store/estimates";
 import { useModule } from "@/hooks/store/use-module";
 import { useWorkItemFilters } from "@/hooks/store/work-item-filters/use-work-item-filters";
+// [ours: terminology] project-aware chart legend (ENG-157)
+import { useProjectTerminology } from "@/hooks/use-project-terminology";
 // plane web constants
 type TModuleAnalyticsProgress = {
   workspaceSlug: string;
@@ -45,6 +47,8 @@ export const ModuleAnalyticsProgress = observer(function ModuleAnalyticsProgress
   const peekModule = searchParams.get("peekModule") || undefined;
   // plane hooks
   const { t } = useTranslation();
+  // [ours: terminology] resolve project terminology for chart legend
+  const term = useProjectTerminology(projectId);
   // hooks
   const { areEstimateEnabledByProjectId, currentActiveEstimateId, estimateById } = useProjectEstimates();
   const { getPlotTypeByModuleId, setPlotType, getModuleById, fetchModuleDetails, fetchArchivedModuleDetails } =
@@ -193,7 +197,7 @@ export const ModuleAnalyticsProgress = observer(function ModuleAnalyticsProgress
                         <ProgressChart
                           distribution={completionChartDistributionData}
                           totalIssues={totalIssues}
-                          plotTitle={"work items"}
+                          plotTitle={term.plural.toLowerCase()}
                         />
                       )}
                     </Fragment>

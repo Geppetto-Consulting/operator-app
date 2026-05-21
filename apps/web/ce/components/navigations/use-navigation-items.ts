@@ -10,6 +10,8 @@ import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
 import { CycleIcon, IntakeIcon, ModuleIcon, PageIcon, ViewsIcon, WorkItemsIcon } from "@plane/propel/icons";
 import type { EUserProjectRoles, IPartialProject } from "@plane/types";
 import type { TNavigationItem } from "@/components/navigation/tab-navigation-root";
+// [ours: terminology] project-aware nav-item label (ENG-157)
+import { useProjectTerminology } from "@/hooks/use-project-terminology";
 
 type UseNavigationItemsProps = {
   workspaceSlug: string;
@@ -29,13 +31,15 @@ export const useNavigationItems = ({
   project,
   allowPermissions,
 }: UseNavigationItemsProps): TNavigationItem[] => {
+  // [ours: terminology] resolve project terminology for the work_items label
+  const term = useProjectTerminology(projectId);
   // Base navigation items
   const baseNavigation = useCallback(
     (workspaceSlug: string, projectId: string): TNavigationItem[] => [
       {
         i18n_key: "sidebar.work_items",
         key: "work_items",
-        name: "Work items",
+        name: term.plural,
         href: `/${workspaceSlug}/projects/${projectId}/issues`,
         icon: WorkItemsIcon,
         access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
@@ -93,7 +97,7 @@ export const useNavigationItems = ({
         sortOrder: 6,
       },
     ],
-    [project]
+    [project, term.plural]
   );
 
   // Combine, filter, and sort navigation items

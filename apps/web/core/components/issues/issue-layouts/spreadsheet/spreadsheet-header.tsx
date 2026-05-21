@@ -15,6 +15,8 @@ import { cn } from "@plane/utils";
 import { MultipleSelectGroupAction } from "@/components/core/multiple-select";
 // hooks
 import type { TSelectionHelper } from "@/hooks/use-multiple-select";
+// [ours: terminology] project-aware terminology for spreadsheet header column (ENG-157)
+import { useProjectTerminology } from "@/hooks/use-project-terminology";
 import { SpreadsheetHeaderColumn } from "./spreadsheet-header-column";
 
 interface Props {
@@ -41,6 +43,8 @@ export const SpreadsheetHeader = observer(function SpreadsheetHeader(props: Prop
   } = props;
   // router
   const { projectId } = useParams();
+  // [ours: terminology] resolve project terminology for header column label
+  const term = useProjectTerminology(projectId?.toString());
   // derived values
   const isGroupSelectionEmpty = selectionHelpers.isGroupSelected(SPREADSHEET_SELECT_GROUP) === "empty";
   // auth
@@ -71,7 +75,7 @@ export const SpreadsheetHeader = observer(function SpreadsheetHeader(props: Prop
                   />
                 </div>
               )}
-              <span className="text-13 font-medium">{`${isEpic ? "Epics" : "Work items"}`}</span>
+              <span className="text-13 font-medium">{`${isEpic ? "Epics" : term.plural}`}</span>
             </div>
           </div>
         </th>

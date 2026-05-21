@@ -47,6 +47,8 @@ import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
 import { useAppRouter } from "@/hooks/use-app-router";
 import useLocalStorage from "@/hooks/use-local-storage";
+// [ours: terminology] project-aware terminology for the cycle-detail breadcrumb tooltip (ENG-157)
+import { useProjectTerminology } from "@/hooks/use-project-terminology";
 // plane web imports
 import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
 
@@ -70,6 +72,8 @@ export const CycleIssuesHeader = observer(function CycleIssuesHeader() {
   const { currentProjectDetails, loader } = useProject();
   const { isMobile } = usePlatformOS();
   const { allowPermissions } = useUserPermissions();
+  // [ours: terminology] resolve project terminology for breadcrumb tooltip
+  const term = useProjectTerminology(projectId?.toString());
 
   const activeLayout = issueFilters?.displayFilters?.layout;
 
@@ -172,7 +176,7 @@ export const CycleIssuesHeader = observer(function CycleIssuesHeader() {
               <Tooltip
                 isMobile={isMobile}
                 tooltipContent={`There are ${workItemsCount} ${
-                  workItemsCount > 1 ? "work items" : "work item"
+                  workItemsCount > 1 ? term.plural.toLowerCase() : term.singular.toLowerCase()
                 } in this cycle`}
                 position="bottom"
               >

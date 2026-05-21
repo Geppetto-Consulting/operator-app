@@ -18,6 +18,8 @@ import { useIssues } from "@/hooks/store/use-issues";
 import { useProject } from "@/hooks/store/use-project";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { usePlatformOS } from "@/hooks/use-platform-os";
+// [ours: terminology] project-aware terminology for archives header + tooltip (ENG-157)
+import { useProjectTerminology } from "@/hooks/use-project-terminology";
 // plane web imports
 import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
 
@@ -25,6 +27,8 @@ type TProps = {
   activeTab: "issues" | "cycles" | "modules";
 };
 
+// [ours: terminology] `issues.label` is resolved inside the component body via
+// useProjectTerminology so it picks up per-project overrides (ENG-157).
 const PROJECT_ARCHIVES_BREADCRUMB_LIST: {
   [key: string]: {
     label: string;
@@ -32,11 +36,6 @@ const PROJECT_ARCHIVES_BREADCRUMB_LIST: {
     icon: React.FC<React.SVGAttributes<SVGElement> & { className?: string }>;
   };
 } = {
-  issues: {
-    label: "Work items",
-    href: "/issues",
-    icon: WorkItemsIcon,
-  },
   cycles: {
     label: "Cycles",
     href: "/cycles",
@@ -61,11 +60,15 @@ export const ProjectArchivesHeader = observer(function ProjectArchivesHeader(pro
   const { loader } = useProject();
   // hooks
   const { isMobile } = usePlatformOS();
+  // [ours: terminology] resolve project terminology for archives surface
+  const term = useProjectTerminology(projectId?.toString());
 
   const issueCount = getGroupIssueCount(undefined, undefined, false);
 
   const activeTabBreadcrumbDetail =
-    PROJECT_ARCHIVES_BREADCRUMB_LIST[activeTab as keyof typeof PROJECT_ARCHIVES_BREADCRUMB_LIST];
+    activeTab === "issues"
+      ? { label: term.plural, href: "/issues", icon: WorkItemsIcon }
+      : PROJECT_ARCHIVES_BREADCRUMB_LIST[activeTab as keyof typeof PROJECT_ARCHIVES_BREADCRUMB_LIST];
 
   return (
     <Header>
@@ -96,7 +99,7 @@ export const ProjectArchivesHeader = observer(function ProjectArchivesHeader(pro
           {activeTab === "issues" && issueCount && issueCount > 0 ? (
             <Tooltip
               isMobile={isMobile}
-              tooltipContent={`There are ${issueCount} ${issueCount > 1 ? "work items" : "work item"} in project's archived`}
+              tooltipContent={`There are ${issueCount} ${issueCount > 1 ? term.plural.toLowerCase() : term.singular.toLowerCase()} in project's archived`}
               position="bottom"
             >
               <span className="flex flex-shrink-0 cursor-default items-center justify-center rounded-xl bg-accent-primary/20 px-2.5 py-0.5 text-center text-11 font-semibold text-accent-primary">

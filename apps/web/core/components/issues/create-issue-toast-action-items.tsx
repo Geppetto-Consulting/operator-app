@@ -12,6 +12,8 @@ import { copyUrlToClipboard, generateWorkItemLink } from "@plane/utils";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useProject } from "@/hooks/store/use-project";
+// [ours: terminology] project-aware View label (ENG-157)
+import { useProjectTerminology } from "@/hooks/use-project-terminology";
 
 type TCreateIssueToastActionItems = {
   workspaceSlug: string;
@@ -23,7 +25,9 @@ type TCreateIssueToastActionItems = {
 export const CreateIssueToastActionItems = observer(function CreateIssueToastActionItems(
   props: TCreateIssueToastActionItems
 ) {
-  const { workspaceSlug, issueId, isEpic = false } = props;
+  const { workspaceSlug, projectId, issueId, isEpic = false } = props;
+  // [ours: terminology] resolve project terminology
+  const term = useProjectTerminology(projectId);
   // state
   const [copied, setCopied] = useState(false);
   // store hooks
@@ -67,7 +71,7 @@ export const CreateIssueToastActionItems = observer(function CreateIssueToastAct
         rel="noopener noreferrer"
         className="rounded-sm px-2 py-1 font-medium text-accent-primary hover:bg-surface-2"
       >
-        {`View ${isEpic ? "epic" : "work item"}`}
+        {`View ${isEpic ? "epic" : term.singular.toLowerCase()}`}
       </a>
 
       {copied ? (

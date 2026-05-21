@@ -9,6 +9,8 @@ import { generateWorkItemLink } from "@plane/utils";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { usePlatformOS } from "@/hooks/use-platform-os";
+// [ours: terminology] project-aware tooltip + deleted-link fallback (ENG-157)
+import { useProjectTerminology } from "@/hooks/use-project-terminology";
 
 type TIssueLink = {
   activityId: string;
@@ -22,6 +24,8 @@ export function IssueLink(props: TIssueLink) {
   } = useIssueDetail();
   const { isMobile } = usePlatformOS();
   const activity = getActivityById(activityId);
+  // [ours: terminology] resolve project terminology for activity's own project
+  const term = useProjectTerminology(activity?.project ?? undefined);
 
   if (!activity) return <></>;
 
@@ -34,7 +38,7 @@ export function IssueLink(props: TIssueLink) {
   });
   return (
     <Tooltip
-      tooltipContent={activity.issue_detail ? activity.issue_detail.name : "This work item has been deleted"}
+      tooltipContent={activity.issue_detail ? activity.issue_detail.name : `This ${term.singular.toLowerCase()} has been deleted`}
       isMobile={isMobile}
     >
       <a
@@ -46,7 +50,7 @@ export function IssueLink(props: TIssueLink) {
       >
         {activity.issue_detail
           ? `${activity.project_detail.identifier}-${activity.issue_detail.sequence_id}`
-          : "Work items"}{" "}
+          : term.plural}{" "}
         <span className="font-regular">{activity.issue_detail?.name}</span>
       </a>
     </Tooltip>

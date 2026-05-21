@@ -34,6 +34,8 @@ import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useProject } from "@/hooks/store/use-project";
 import { useUser } from "@/hooks/store/user";
+// [ours: terminology] project-aware error toasts (ENG-157)
+import { useProjectTerminology } from "@/hooks/use-project-terminology";
 
 export const usePowerKWorkItemContextBasedCommands = (): TPowerKCommandConfig[] => {
   // params
@@ -65,6 +67,8 @@ export const usePowerKWorkItemContextBasedCommands = (): TPowerKCommandConfig[] 
   const entityDetails = entityId ? getIssueById(entityId) : null;
   const isEpic = !!entityDetails?.is_epic;
   const projectDetails = entityDetails?.project_id ? getProjectById(entityDetails?.project_id) : undefined;
+  // [ours: terminology] resolve project terminology for power-k toasts
+  const term = useProjectTerminology(entityDetails?.project_id ?? undefined);
   const isCurrentUserAssigned = !!entityDetails?.assignee_ids?.includes(currentUser?.id ?? "");
   const isEstimateEnabled = entityDetails?.project_id
     ? areEstimateEnabledByProjectId(entityDetails?.project_id)
@@ -92,7 +96,7 @@ export const usePowerKWorkItemContextBasedCommands = (): TPowerKCommandConfig[] 
         setToast({
           type: TOAST_TYPE.ERROR,
           title: "Error!",
-          message: `${isEpic ? "Epic" : "Work item"} could not be updated. Please try again.`,
+          message: `${isEpic ? "Epic" : term.singular} could not be updated. Please try again.`,
         });
       });
     },
@@ -322,7 +326,7 @@ export const usePowerKWorkItemContextBasedCommands = (): TPowerKCommandConfig[] 
           setToast({
             type: TOAST_TYPE.ERROR,
             title: "Error!",
-            message: `${entityDetails.is_epic ? "Epic" : "Work item"} could not be updated. Please try again.`,
+            message: `${entityDetails.is_epic ? "Epic" : term.singular} could not be updated. Please try again.`,
           });
         }
       },
@@ -354,7 +358,7 @@ export const usePowerKWorkItemContextBasedCommands = (): TPowerKCommandConfig[] 
           setToast({
             type: TOAST_TYPE.ERROR,
             title: "Error!",
-            message: `${entityDetails.is_epic ? "Epic" : "Work item"} could not be updated. Please try again.`,
+            message: `${entityDetails.is_epic ? "Epic" : term.singular} could not be updated. Please try again.`,
           });
         }
       },
