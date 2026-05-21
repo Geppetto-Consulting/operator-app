@@ -63,3 +63,10 @@ from .user import UserEndpoint
 from .invite import WorkspaceInvitationsViewset
 
 from .sticky import StickyViewSet
+
+from .view import (
+    WorkspaceViewListCreateAPIEndpoint,
+    WorkspaceViewDetailAPIEndpoint,
+    ProjectViewListCreateAPIEndpoint,
+    ProjectViewDetailAPIEndpoint,
+)
