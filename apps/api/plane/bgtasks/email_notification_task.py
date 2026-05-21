@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 # Third party imports
 from celery import shared_task
 from django.core.mail import EmailMultiAlternatives, get_connection
-from plane.utils.brand_context import render_email_template
+from plane.utils.brand_context import render_email_template, workspace_brand_context
 
 # Django imports
 from django.utils import timezone
@@ -258,6 +258,8 @@ def send_email_notification(issue_id, notification_data, receiver_id, email_noti
                 "user_preference": f"{base_api}/{str(issue.project.workspace.slug)}/settings/account/notifications/",
                 "comments": comments,
                 "entity_type": "issue",
+                # [ours: brand] ENG-114 — workspace-level branding.
+                **workspace_brand_context(issue.project.workspace),
             }
             html_content = render_email_template("emails/notifications/issue-updates.html", context)
             text_content = generate_plain_text_from_html(html_content)

@@ -34,6 +34,12 @@ export interface IWorkspace {
   total_projects?: number;
   role: number;
   timezone: string;
+  // [ours: brand] Operator fork — ENG-114 / Phase 2.
+  // Both nullable: when null, the UI + email templates fall back to operator
+  // defaults (see packages/constants/src/brand.ts BRAND.* and the runtime
+  // `--brand-default` CSS var from packages/tailwind-config/variables.css).
+  brand_color: string | null;
+  brand_name_override: string | null;
 }
 
 export interface IWorkspaceLite {

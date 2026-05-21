@@ -492,15 +492,23 @@
                                                 line-height: 0px;
                                               "
                                             >
+                                              {# [ours: brand] ENG-114 — per-workspace logo with text fallback. #}
+                                              {% if brand_logo_url %}
                                               <img
-                                                src="https://media.docs.plane.so/logo/new-logo-white.png"
+                                                src="{{ brand_logo_url }}"
                                                 width="150"
+                                                alt="{{ brand_name }}"
                                                 border="0"
                                                 style="
                                                   display: block;
                                                   width: 100%;
                                                 "
                                               />
+                                              {% else %}
+                                              <div style="color: #ffffff; font-size: 18px; font-weight: 600; line-height: 1.2;">
+                                                {{ brand_name }}
+                                              </div>
+                                              {% endif %}
                                             </td>
                                           </tr>
                                         </table>
