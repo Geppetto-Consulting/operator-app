@@ -23,11 +23,15 @@ export const LIVE_URL = encodeURI(`${LIVE_BASE_URL}${LIVE_BASE_PATH}`);
 export const WEB_BASE_URL = process.env.VITE_WEB_BASE_URL || "";
 export const WEB_BASE_PATH = process.env.VITE_WEB_BASE_PATH || "";
 export const WEB_URL = encodeURI(`${WEB_BASE_URL}${WEB_BASE_PATH}`);
-// plane website url
-export const WEBSITE_URL = process.env.VITE_WEBSITE_URL || "https://plane.so";
+// Promptable Operator fork (ENG-113): defaults come from the brand seam.
+// Phase 2 (ENG-114) will override these per-workspace at runtime.
+import { MARKETING_URL, SUPPORT_EMAIL as BRAND_SUPPORT_EMAIL } from "./brand";
+
+// product marketing website url
+export const WEBSITE_URL = process.env.VITE_WEBSITE_URL || MARKETING_URL;
 // support email
-export const SUPPORT_EMAIL = process.env.VITE_SUPPORT_EMAIL || "support@plane.so";
+export const SUPPORT_EMAIL = process.env.VITE_SUPPORT_EMAIL || BRAND_SUPPORT_EMAIL;
 // marketing links
-export const MARKETING_PRICING_PAGE_LINK = "https://plane.so/pricing";
-export const MARKETING_CONTACT_US_PAGE_LINK = "https://plane.so/contact";
-export const MARKETING_PLANE_ONE_PAGE_LINK = "https://plane.so/one";
+export const MARKETING_PRICING_PAGE_LINK = `${MARKETING_URL}/pricing`;
+export const MARKETING_CONTACT_US_PAGE_LINK = `${MARKETING_URL}/contact`;
+export const MARKETING_PLANE_ONE_PAGE_LINK = `${MARKETING_URL}/one`;

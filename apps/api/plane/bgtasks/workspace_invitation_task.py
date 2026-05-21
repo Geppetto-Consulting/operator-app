@@ -10,7 +10,7 @@ from celery import shared_task
 
 # Django imports
 from django.core.mail import EmailMultiAlternatives, get_connection
-from django.template.loader import render_to_string
+from plane.utils.brand_context import render_email_template
 
 # Module imports
 from plane.db.models import User, Workspace, WorkspaceMemberInvite
@@ -46,7 +46,7 @@ def workspace_invitation(email, workspace_id, token, current_site, inviter):
         ) = get_email_configuration()
 
         # Subject of the email
-        subject = f"{user.first_name or user.display_name or user.email} has invited you to join them in {workspace.name} on Plane"  # noqa: E501
+        subject = f"{user.first_name or user.display_name or user.email} has invited you to join them in {workspace.name} on Promptable Operator"  # noqa: E501
 
         context = {
             "email": email,
@@ -55,7 +55,7 @@ def workspace_invitation(email, workspace_id, token, current_site, inviter):
             "abs_url": abs_url,
         }
 
-        html_content = render_to_string("emails/invitations/workspace_invitation.html", context)
+        html_content = render_email_template("emails/invitations/workspace_invitation.html", context)
 
         text_content = generate_plain_text_from_html(html_content)
 

@@ -11,7 +11,7 @@ from celery import shared_task
 # Django imports
 # Third party imports
 from django.core.mail import EmailMultiAlternatives, get_connection
-from django.template.loader import render_to_string
+from plane.utils.brand_context import render_email_template
 
 # Module imports
 from plane.license.utils.instance_value import get_email_configuration
@@ -35,7 +35,7 @@ def forgot_password(first_name, email, uidb64, token, current_site):
             EMAIL_FROM,
         ) = get_email_configuration()
 
-        subject = "A new password to your Plane account has been requested"
+        subject = "A new password to your Promptable Operator account has been requested"
 
         context = {
             "first_name": first_name,
@@ -43,7 +43,7 @@ def forgot_password(first_name, email, uidb64, token, current_site):
             "email": email,
         }
 
-        html_content = render_to_string("emails/auth/forgot_password.html", context)
+        html_content = render_email_template("emails/auth/forgot_password.html", context)
 
         text_content = generate_plain_text_from_html(html_content)
 

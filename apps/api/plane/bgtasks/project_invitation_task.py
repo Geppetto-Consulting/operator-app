@@ -11,7 +11,7 @@ from celery import shared_task
 # Django imports
 # Third party imports
 from django.core.mail import EmailMultiAlternatives, get_connection
-from django.template.loader import render_to_string
+from plane.utils.brand_context import render_email_template
 
 # Module imports
 from plane.db.models import Project, ProjectMemberInvite, User
@@ -30,7 +30,7 @@ def project_invitation(email, project_id, token, current_site, invitor):
         relativelink = f"/project-invitations/?invitation_id={project_member_invite.id}&email={email}&slug={project.workspace.slug}&project_id={str(project_id)}"  # noqa: E501
         abs_url = current_site + relativelink
 
-        subject = f"{user.first_name or user.display_name or user.email} invited you to join {project.name} on Plane"
+        subject = f"{user.first_name or user.display_name or user.email} invited you to join {project.name} on Promptable Operator"
 
         context = {
             "email": email,
@@ -40,7 +40,7 @@ def project_invitation(email, project_id, token, current_site, invitor):
             "current_site": current_site,
         }
 
-        html_content = render_to_string("emails/invitations/project_invitation.html", context)
+        html_content = render_email_template("emails/invitations/project_invitation.html", context)
 
         text_content = generate_plain_text_from_html(html_content)
 

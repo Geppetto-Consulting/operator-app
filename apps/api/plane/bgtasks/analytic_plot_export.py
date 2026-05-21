@@ -12,7 +12,7 @@ from celery import shared_task
 
 # Django imports
 from django.core.mail import EmailMultiAlternatives, get_connection
-from django.template.loader import render_to_string
+from plane.utils.brand_context import render_email_template
 from django.db.models import Q, Case, Value, When
 from django.db import models
 from django.db.models.functions import Concat
@@ -52,7 +52,7 @@ MODULE_ID = "issue_module__module_id"
 def send_export_email(email, slug, csv_buffer, rows):
     """Helper function to send export email."""
     subject = "Your Export is ready"
-    html_content = render_to_string("emails/exports/analytics.html", {})
+    html_content = render_email_template("emails/exports/analytics.html", {})
     text_content = generate_plain_text_from_html(html_content)
 
     csv_buffer.seek(0)
