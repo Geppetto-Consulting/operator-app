@@ -8,7 +8,7 @@ This is the consumer-facing surface of the Promptable Operator product. Promptab
 
 ## Status
 
-- **`operator-app-v0.1.0`** — baseline fork. No patches to upstream source. Establishes the GHCR image pipeline so later phases can ship branded + extended images on the same plumbing.
+- **`operator-app-v0.1.0`** — baseline fork. No patches to upstream source. Useful as a reference snapshot for future rebases.
 - Subsequent phases (Phase 1+) layer on:
   - Brand strings (Plane → Promptable Operator) via centralised constants
   - Per-workspace brand customisation (logo, colour) at the workspace level
@@ -19,6 +19,36 @@ This is the consumer-facing surface of the Promptable Operator product. Promptab
 
 See the parent programme bead `ENG-42` in the Promptable Operator bead system for the full phase plan, and individual phase beads (`ENG-112` … `ENG-121`) for executor briefs.
 
+## Build + run model
+
+**No registry, no CI.** Both development and deployment build images directly from source.
+
+### Local development (Mac, Docker Desktop)
+
+```sh
+git clone git@github.com:Geppetto-Consulting/operator-app.git
+cd operator-app
+docker compose up --build
+```
+
+Edit source, rebuild affected services with `docker compose up --build <service>`. Plane's own root `docker-compose.yml` (inherited from upstream) is the dev compose; it builds each service from its `Dockerfile`.
+
+### Production (Hetzner)
+
+The Hetzner box clones this repo and builds images on the host:
+
+```sh
+ssh root@<hetzner-ip>
+cd /opt/operator-app
+git pull
+docker compose --env-file /opt/plane/.env build
+docker compose --env-file /opt/plane/.env up -d
+```
+
+This matches the deploy pattern used elsewhere in `promptable-operator` (see `infra/mcp/deploy.sh` — `docker compose ... up -d --build`). No image-transfer step; the Hetzner box builds from the same source it just pulled.
+
+The Promptable Operator stack's compose file (`promptable-operator/infra/plane/docker-compose.yml`) supports both modes via `PLANE_IMAGE_PREFIX` / `PLANE_VERSION` env vars — default is the official `makeplane/plane-*` images; switch to local-build mode when cutover lands (Phase 2).
+
 ## Version scheme
 
 The fork uses **its own SemVer**, decoupled from upstream Plane's tags. Versions are tagged `operator-app-vX.Y.Z`:
@@ -27,26 +57,7 @@ The fork uses **its own SemVer**, decoupled from upstream Plane's tags. Versions
 - **Y (minor)** — feature addition (e.g. a new public-API surface, a new branding hook, terminology component coverage milestone).
 - **Z (patch)** — patch-only release (bug fixes, upstream-rebase no-op cycles, dependency bumps).
 
-The current baseline is `operator-app-v0.1.0` — `0.x.y` because the fork has not yet shipped a stable branded release.
-
-Image tags published to GHCR mirror the SemVer (so `operator-app-api:v0.1.0`, not `operator-app-api:operator-app-v0.1.0`).
-
-## Container images
-
-Each tag push (`operator-app-v*`) builds six images and publishes them to the GitHub Container Registry under `ghcr.io/geppetto-consulting/operator-app-<service>` with both the `vX.Y.Z` and `latest` tags:
-
-| Service | Image |
-|---|---|
-| API (Django backend) | `ghcr.io/geppetto-consulting/operator-app-api` |
-| Web (Next.js workspace UI) | `ghcr.io/geppetto-consulting/operator-app-web` |
-| Admin (Next.js admin UI) | `ghcr.io/geppetto-consulting/operator-app-admin` |
-| Space (Next.js public-share UI) | `ghcr.io/geppetto-consulting/operator-app-space` |
-| Live (HocusPocus collaboration server) | `ghcr.io/geppetto-consulting/operator-app-live` |
-| Proxy (Caddy reverse proxy) | `ghcr.io/geppetto-consulting/operator-app-proxy` |
-
-`main` branch builds also publish a mutable `:main` tag for development use.
-
-The build pipeline lives in [`.github/workflows/build-images.yml`](workflows/build-images.yml) and uses the GitHub-provided `GITHUB_TOKEN` (no PATs).
+The current baseline is `operator-app-v0.1.0` — `0.x.y` because the fork has not yet shipped a stable branded release. Tags are reference markers; nothing builds or publishes off them automatically.
 
 ## Upstream remote
 
@@ -72,9 +83,8 @@ upstream  https://github.com/makeplane/plane.git (fetch/push)
 
 For someone new to the fork:
 
-- [`.github/workflows/build-images.yml`](workflows/build-images.yml) — image-build pipeline (the only fork-only file in the v0.1.0 baseline beyond this README).
-- Everything else — upstream Plane source, unchanged at the `operator-app-v0.1.0` baseline. See upstream's [`README.md`](../README.md) for architecture, setup, and contribution docs.
-- Future phases land fork-only files in new locations (e.g. `apps/api/plane/api/views/page.py` for the public Pages API) and centralised seams (e.g. `packages/constants/brand.ts` for brand strings) rather than in-place patches to upstream files. This keeps the monthly upstream rebase tractable.
+- Everything is upstream Plane source, unchanged at the `operator-app-v0.1.0` baseline. See upstream's [`README.md`](../README.md) for architecture, setup, and contribution docs.
+- Fork-only additions (beyond this README) land in **new files** rather than as patches to upstream — e.g. `apps/api/plane/api/views/page.py` for the public Pages API (Phase 3), `packages/constants/brand.ts` for centralised brand strings (Phase 1). This keeps the monthly upstream rebase tractable.
 
 ## Licence
 
