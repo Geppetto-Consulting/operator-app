@@ -3,6 +3,7 @@
 # See the LICENSE file for details.
 
 import pytest
+from unittest import mock
 from rest_framework.test import APIClient
 from pytest_django.fixtures import django_db_setup
 
@@ -14,6 +15,28 @@ from plane.db.models.api import APIToken
 def django_db_setup(django_db_setup):  # noqa: F811
     """Set up the Django database for the test session"""
     pass
+
+
+# [ours: contract-tests] ENG-143 — session-scope soft-delete broker shim.
+#
+# SoftDeleteModel.delete (plane/db/mixins.py:78) fires
+# soft_delete_related_objects.delay(...) via Celery to cascade soft-deletes
+# to reverse relations. Under tests we now run Celery in eager mode
+# (CELERY_TASK_ALWAYS_EAGER from ENG-141), but eager-mode dispatch still
+# walks the model's related fields and recurses — this can crash on
+# fixtures where reverse relations weren't fully wired (e.g. ProjectPage
+# rows without project_pages reverse accessor patches). The shim no-ops
+# `.delay()` so the underlying cascade task is skipped, which matches
+# what the per-file _stub_soft_delete_celery fixture from ENG-115 was
+# doing — generalising it here lets test_labels.py, test_view.py, and
+# any future contract test inherit the same behavior without copy-paste.
+@pytest.fixture(autouse=True)
+def _stub_soft_delete_celery():
+    with mock.patch(
+        "plane.db.mixins.soft_delete_related_objects.delay",
+        return_value=None,
+    ):
+        yield
 
 
 @pytest.fixture

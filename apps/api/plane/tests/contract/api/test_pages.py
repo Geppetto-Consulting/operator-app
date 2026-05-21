@@ -3,7 +3,6 @@
 # See the LICENSE file for details.
 
 import pytest
-from unittest import mock
 from rest_framework import status
 from rest_framework.test import APIClient
 from uuid import uuid4
@@ -19,18 +18,9 @@ from plane.db.models import (
 )
 from plane.db.models.api import APIToken
 
-
-@pytest.fixture(autouse=True)
-def _stub_soft_delete_celery():
-    """The base SoftDeleteModel.delete dispatches a Celery task via
-    .delay(); tests run without a broker, so we no-op the dispatch.
-    Mirrors what plane/tests/contract/api/test_labels.py would need
-    if its delete test was reliable."""
-    with mock.patch(
-        "plane.db.mixins.soft_delete_related_objects.delay",
-        return_value=None,
-    ):
-        yield
+# Note: the soft-delete broker shim previously defined here was hoisted to
+# apps/api/plane/tests/conftest.py as a session-scope autouse fixture
+# (ENG-143). Tests in this file rely on it implicitly via conftest.
 
 
 @pytest.fixture
