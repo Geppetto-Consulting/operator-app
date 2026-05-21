@@ -181,11 +181,15 @@
                   >
                     <tr>
                       <td>
+                        {# [ours: brand] ENG-156 — Accept-invite CTA uses
+                           workspace brand_color (falls back to operator
+                           default #1080bc when unset) for visual
+                           consistency with the branded header above. #}
                         <a
                           href="{{abs_url}}"
                           target="_blank"
                           style="
-                            background-color: #1080bc;
+                            background-color: {{ brand_color|default:'#1080bc' }};
                             border-radius: 6px;
                             color: #ffffff;
                             padding: 12px 24px;
