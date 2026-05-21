@@ -339,7 +339,7 @@
   "project_modules": {
     "status": {
       "backlog": "Backlog",
-      "planned": "Promptable Operatorjado",
+      "planned": "Planejado",
       "in_progress": "Em Andamento",
       "paused": "Pausado",
       "completed": "Concluído",

@@ -328,7 +328,7 @@
         "short_title": "Ciclos",
         "description": "Agende o trabalho em períodos flexíveis que se adaptam ao ritmo e ao tempo únicos deste projeto.",
         "toggle_title": "Ativar ciclos",
-        "toggle_description": "Promptable Operatorje o trabalho em períodos de tempo focados."
+        "toggle_description": "Planeje o trabalho em períodos de tempo focados."
       },
       "modules": {
         "title": "Módulos",

@@ -4,11 +4,11 @@
 
 from django.core.mail import EmailMultiAlternatives, get_connection
 from django.core.management import BaseCommand, CommandError
-from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
 # Module imports
 from plane.license.utils.instance_value import get_email_configuration
+from plane.utils.brand_context import BRAND_CONTEXT_DEFAULTS, render_email_template
 
 
 class Command(BaseCommand):
@@ -44,9 +44,9 @@ class Command(BaseCommand):
             timeout=30,
         )
         # Prepare email details
-        subject = "Test email from Plane"
+        subject = f"Test email from {BRAND_CONTEXT_DEFAULTS['brand_name']}"
 
-        html_content = render_to_string("emails/test_email.html")
+        html_content = render_email_template("emails/test_email.html")
         text_content = strip_tags(html_content)
 
         self.stdout.write(self.style.SUCCESS("Trying to send test email..."))
