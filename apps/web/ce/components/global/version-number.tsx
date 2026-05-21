@@ -8,7 +8,8 @@
 import { useTranslation } from "@plane/i18n";
 import packageJson from "package.json";
 
-export function PlaneVersionNumber() {
+// [ours: brand] renamed PlaneVersionNumber → AppVersionNumber (ENG-144)
+export function AppVersionNumber() {
   const { t } = useTranslation();
   return (
     <span>

@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-export { createPdfDocument, renderPlaneDocToPdfBlob, renderPlaneDocToPdfBuffer } from "./plane-pdf-exporter";
+export { createPdfDocument, renderDocToPdfBlob, renderDocToPdfBuffer } from "./plane-pdf-exporter";
 export { createKeyGenerator, nodeRenderers, renderNode } from "./node-renderers";
 export { markRenderers, applyMarks } from "./mark-renderers";
 export { pdfStyles } from "./styles";
