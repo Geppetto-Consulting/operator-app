@@ -56,12 +56,21 @@ export const ProjectEmptyState = observer(function ProjectEmptyState() {
       ) : (
         <EmptyStateDetailed
           assetKey="work-item"
-          /* [ours: terminology] per-project labels for empty state (ENG-119) */
-          title={`Start with your first ${term.singular.toLowerCase()}.`}
-          description={`${term.plural} are the building blocks of your project — assign owners, set priorities, and track progress easily.`}
+          /* [ours: terminology] per-project labels for empty state (ENG-119).
+             ENG-161 — restored i18n keys so non-EN locales translate; the
+             singular/plural placeholders are interpolated from the per-
+             project terminology override. */
+          title={t("project_empty_state.work_items.title", {
+            singular: term.singular.toLowerCase(),
+          })}
+          description={t("project_empty_state.work_items.description", {
+            plural: term.plural,
+          })}
           actions={[
             {
-              label: `Create your first ${term.singular.toLowerCase()}`,
+              label: t("project_empty_state.work_items.cta_primary", {
+                singular: term.singular.toLowerCase(),
+              }),
               onClick: () => {
                 toggleCreateIssueModal(true, EIssuesStoreType.PROJECT);
               },
