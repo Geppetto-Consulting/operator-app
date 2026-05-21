@@ -11,7 +11,7 @@ from celery import shared_task
 # Django imports
 # Third party imports
 from django.core.mail import EmailMultiAlternatives, get_connection
-from django.template.loader import render_to_string
+from plane.utils.brand_context import render_email_template
 
 # Module imports
 from plane.license.utils.instance_value import get_email_configuration
@@ -33,10 +33,10 @@ def magic_link(email, key, token):
         ) = get_email_configuration()
 
         # Send the mail
-        subject = f"Your unique Plane login code is {token}"
+        subject = f"Your unique Promptable Operator login code is {token}"
         context = {"code": token, "email": email}
 
-        html_content = render_to_string("emails/auth/magic_signin.html", context)
+        html_content = render_email_template("emails/auth/magic_signin.html", context)
         text_content = generate_plain_text_from_html(html_content)
 
         connection = get_connection(

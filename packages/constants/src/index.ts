@@ -7,6 +7,19 @@
 export * from "./ai";
 export * from "./analytics";
 export * from "./auth";
+// Brand seam (ENG-113). `SUPPORT_EMAIL` is intentionally re-exported only from
+// ./endpoints so callers always see the env-overridable value.
+export {
+  PRODUCT_NAME,
+  PRODUCT_NAME_SHORT,
+  COMPANY_NAME,
+  COMPANY_LEGAL_NAME,
+  MARKETING_URL,
+  DOCS_URL,
+  TWITTER_HANDLE,
+  BRAND,
+  type Brand,
+} from "./brand";
 export * from "./chart";
 export * from "./cycle";
 export * from "./dashboard";

@@ -19,7 +19,7 @@ from django.conf import settings
 from django.db.models import Prefetch
 from django.core.mail import EmailMultiAlternatives, get_connection
 from django.core.serializers.json import DjangoJSONEncoder
-from django.template.loader import render_to_string
+from plane.utils.brand_context import render_email_template
 from django.core.exceptions import ObjectDoesNotExist
 
 # Module imports
@@ -222,7 +222,7 @@ def send_webhook_deactivation_email(webhook_id: str, receiver_id: str, current_s
             "message": message,
             "webhook_url": f"{current_site}/{str(webhook.workspace.slug)}/settings/webhooks/{str(webhook.id)}",
         }
-        html_content = render_to_string("emails/notifications/webhook-deactivate.html", context)
+        html_content = render_email_template("emails/notifications/webhook-deactivate.html", context)
         text_content = generate_plain_text_from_html(html_content)
 
         # Set the email connection

@@ -114,8 +114,8 @@ class EmailCredentialCheckEndpoint(BaseAPIView):
             use_ssl=EMAIL_USE_SSL == "1",
         )
         # Prepare email details
-        subject = "Email Notification from Plane"
-        message = "This is a sample email notification sent from Plane application."
+        subject = "Email Notification from Promptable Operator"
+        message = "This is a sample email notification sent from Promptable Operator."
         # Send the email
         try:
             msg = EmailMultiAlternatives(

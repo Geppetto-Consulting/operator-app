@@ -10,7 +10,7 @@ from celery import shared_task
 
 # Third party imports
 from django.core.mail import EmailMultiAlternatives, get_connection
-from django.template.loader import render_to_string
+from plane.utils.brand_context import render_email_template
 
 
 # Module imports
@@ -55,10 +55,10 @@ def project_add_user_email(current_site, project_member_id, invitor_id):
         ) = get_email_configuration()
 
         # Set the subject
-        subject = "You have been invited to a Plane project"
+        subject = "You have been invited to a Promptable Operator project"
 
         # Render the email template
-        html_content = render_to_string("emails/notifications/project_addition.html", context)
+        html_content = render_email_template("emails/notifications/project_addition.html", context)
         text_content = generate_plain_text_from_html(html_content)
         # Initialize the connection
         connection = get_connection(
