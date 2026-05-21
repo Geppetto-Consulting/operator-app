@@ -21,6 +21,8 @@ import { cn } from "@plane/utils";
 import { ExistingIssuesListModal } from "@/components/core/modals/existing-issues-list-modal";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
+// [ours: terminology] Operator fork — per-project label override (ENG-119)
+import { useProjectTerminology } from "@/hooks/use-project-terminology";
 import { QuickAddIssueRoot } from "../quick-add";
 
 type TCalendarQuickAddIssueActions = {
@@ -36,6 +38,8 @@ export const CalendarQuickAddIssueActions = observer(function CalendarQuickAddIs
 ) {
   const { prePopulatedData, quickAddCallback, addIssuesToView, onOpen, isEpic = false } = props;
   const { t } = useTranslation();
+  // [ours: terminology] per-project label override (ENG-119)
+  const term = useProjectTerminology();
   // router
   const { workspaceSlug, projectId, moduleId } = useParams();
   // states
@@ -126,14 +130,16 @@ export const CalendarQuickAddIssueActions = observer(function CalendarQuickAddIs
               customButton={
                 <div className="flex w-full items-center gap-x-[6px] rounded-md px-2 py-1.5 text-tertiary hover:text-tertiary">
                   <PlusIcon className="h-3.5 w-3.5 flex-shrink-0 stroke-2" />
+                  {/* [ours: terminology] per-project verb_create for non-epic (ENG-119) */}
                   <span className="flex-shrink-0 text-13 font-medium">
-                    {isEpic ? t("epic.add.label") : t("issue.add.label")}
+                    {isEpic ? t("epic.add.label") : term.verb_create}
                   </span>
                 </div>
               }
             >
               <CustomMenu.MenuItem onClick={handleNewIssue}>
-                {isEpic ? t("epic.add.label") : t("issue.add.label")}
+                {/* [ours: terminology] per-project verb_create for non-epic (ENG-119) */}
+                {isEpic ? t("epic.add.label") : term.verb_create}
               </CustomMenu.MenuItem>
               {!isEpic && (
                 <CustomMenu.MenuItem onClick={handleExistingIssue}>{t("issue.add.existing")}</CustomMenu.MenuItem>

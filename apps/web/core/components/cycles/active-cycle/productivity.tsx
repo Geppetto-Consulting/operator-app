@@ -20,6 +20,8 @@ import ProgressChart from "@/components/core/sidebar/progress-chart";
 import { SimpleEmptyState } from "@/components/empty-state/simple-empty-state-root";
 // hooks
 import { useCycle } from "@/hooks/store/use-cycle";
+// [ours: terminology] Operator fork — per-project label override (ENG-119)
+import { useProjectTerminology } from "@/hooks/use-project-terminology";
 import { EstimateTypeDropdown } from "../dropdowns/estimate-type-dropdown";
 
 export type ActiveCycleProductivityProps = {
@@ -36,6 +38,8 @@ export const ActiveCycleProductivity = observer(function ActiveCycleProductivity
   const { t } = useTranslation();
   // hooks
   const { getEstimateTypeByCycleId, setEstimateType } = useCycle();
+  // [ours: terminology] per-project label override (ENG-119)
+  const term = useProjectTerminology(projectId);
   // derived values
   const estimateType: TCycleEstimateType = (cycle && getEstimateTypeByCycleId(cycle.id)) || "issues";
   const resolvedPath = resolvedTheme === "light" ? lightChartAsset : darkChartAsset;
@@ -66,7 +70,8 @@ export const ActiveCycleProductivity = observer(function ActiveCycleProductivity
                 {estimateType === "points" ? (
                   <span>{`Pending points - ${cycle.backlog_estimate_points + cycle.unstarted_estimate_points + cycle.started_estimate_points}`}</span>
                 ) : (
-                  <span>{`Pending work items - ${cycle.backlog_issues + cycle.unstarted_issues + cycle.started_issues}`}</span>
+                  /* [ours: terminology] per-project plural label (ENG-119) */
+                  <span>{`Pending ${term.plural.toLowerCase()} - ${cycle.backlog_issues + cycle.unstarted_issues + cycle.started_issues}`}</span>
                 )}
               </div>
 
@@ -83,7 +88,8 @@ export const ActiveCycleProductivity = observer(function ActiveCycleProductivity
                       <ProgressChart
                         distribution={completionChartDistributionData}
                         totalIssues={cycle.total_issues || 0}
-                        plotTitle={"work items"}
+                        /* [ours: terminology] per-project plural label (ENG-119) */
+                        plotTitle={term.plural.toLowerCase()}
                       />
                     )}
                   </Fragment>

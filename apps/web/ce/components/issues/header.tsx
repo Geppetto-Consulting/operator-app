@@ -35,6 +35,8 @@ import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { usePlatformOS } from "@/hooks/use-platform-os";
+// [ours: terminology] Operator fork — per-project label override (ENG-119)
+import { useProjectTerminology } from "@/hooks/use-project-terminology";
 // plane web imports
 import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
 
@@ -48,6 +50,8 @@ export const IssuesHeader = observer(function IssuesHeader() {
   } = useIssues(EIssuesStoreType.PROJECT);
   // i18n
   const { t } = useTranslation();
+  // [ours: terminology] per-project label override (ENG-119)
+  const term = useProjectTerminology();
 
   const { currentProjectDetails, loader } = useProject();
 
@@ -73,7 +77,8 @@ export const IssuesHeader = observer(function IssuesHeader() {
             <Breadcrumbs.Item
               component={
                 <BreadcrumbLink
-                  label="Work Items"
+                  /* [ours: terminology] per-project plural label (ENG-119) */
+                  label={term.plural}
                   href={`/${workspaceSlug}/projects/${projectId}/issues/`}
                   icon={<WorkItemsIcon className="h-4 w-4 text-tertiary" />}
                   isLast
@@ -85,7 +90,8 @@ export const IssuesHeader = observer(function IssuesHeader() {
           {issuesCount && issuesCount > 0 ? (
             <Tooltip
               isMobile={isMobile}
-              tooltipContent={`There are ${issuesCount} ${issuesCount > 1 ? "work items" : "work item"} in this project`}
+              /* [ours: terminology] per-project singular/plural in count tooltip (ENG-119) */
+              tooltipContent={`There are ${issuesCount} ${issuesCount > 1 ? term.plural : term.singular} in this project`}
               position="bottom"
             >
               <CountChip count={issuesCount} />
@@ -125,8 +131,9 @@ export const IssuesHeader = observer(function IssuesHeader() {
             }}
             data-ph-element={WORK_ITEM_TRACKER_ELEMENTS.HEADER_ADD_BUTTON.WORK_ITEMS}
           >
-            <div className="block sm:hidden">{t("issue.label", { count: 1 })}</div>
-            <div className="hidden sm:block">{t("issue.add.label")}</div>
+            {/* [ours: terminology] per-project singular/verb_create on add button (ENG-119) */}
+            <div className="block sm:hidden">{term.singular}</div>
+            <div className="hidden sm:block">{term.verb_create}</div>
           </Button>
         )}
       </Header.RightItem>

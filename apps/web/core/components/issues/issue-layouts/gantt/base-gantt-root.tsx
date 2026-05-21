@@ -23,6 +23,8 @@ import { useIssues } from "@/hooks/store/use-issues";
 import { useUserPermissions } from "@/hooks/store/user";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
+// [ours: terminology] Operator fork — per-project label override (ENG-119)
+import { useProjectTerminology } from "@/hooks/use-project-terminology";
 import { useTimeLineChart } from "@/hooks/use-timeline-chart";
 // plane web hooks
 import { useBulkOperationStatus } from "@/plane-web/hooks/use-bulk-operation-status";
@@ -47,6 +49,8 @@ export type GanttStoreType =
 export const BaseGanttRoot = observer(function BaseGanttRoot(props: IBaseGanttRoot) {
   const { viewId, isCompletedCycle = false, isEpic = false } = props;
   const { t } = useTranslation();
+  // [ours: terminology] per-project label override (ENG-119)
+  const term = useProjectTerminology();
   // router
   const { workspaceSlug, projectId } = useParams();
 
@@ -130,8 +134,9 @@ export const BaseGanttRoot = observer(function BaseGanttRoot(props: IBaseGanttRo
         <div className="h-full w-full">
           <GanttChartRoot
             border={false}
-            title={isEpic ? t("epic.label", { count: 2 }) : t("issue.label", { count: 2 })}
-            loaderTitle={isEpic ? t("epic.label", { count: 2 }) : t("issue.label", { count: 2 })}
+            /* [ours: terminology] per-project plural label for non-epic (ENG-119) */
+            title={isEpic ? t("epic.label", { count: 2 }) : term.plural}
+            loaderTitle={isEpic ? t("epic.label", { count: 2 }) : term.plural}
             blockIds={issuesIds}
             blockUpdateHandler={updateIssueBlockStructure}
             blockToRender={(data: TIssue) => <IssueGanttBlock issueId={data.id} isEpic={isEpic} />}

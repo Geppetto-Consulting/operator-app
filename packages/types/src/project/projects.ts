@@ -40,6 +40,11 @@ export interface IPartialProject {
   created_by?: string;
   updated_by?: string;
   intake_count?: number;
+  // [ours: terminology] operator fork — see ENG-118 / ENG-119. Terminology
+  // lives on the partial so workspace-sidebar surfaces (which load only the
+  // partial project) can resolve the correct per-project label without a
+  // separate full-fetch.
+  terminology?: TProjectTerminology;
 }
 
 // [ours: terminology] Operator fork — per-project terminology override.
@@ -68,8 +73,6 @@ export interface IProject extends IPartialProject {
   members?: string[];
   timezone?: string;
   next_work_item_sequence?: number;
-  // [ours: terminology] operator fork — see ENG-118
-  terminology?: TProjectTerminology;
 }
 
 export type TProjectAnalyticsCountParams = {

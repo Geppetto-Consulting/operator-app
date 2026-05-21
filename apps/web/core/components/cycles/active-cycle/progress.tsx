@@ -17,6 +17,8 @@ import darkProgressAsset from "@/app/assets/empty-state/active-cycle/progress-da
 import lightProgressAsset from "@/app/assets/empty-state/active-cycle/progress-light.webp?url";
 // components
 import { SimpleEmptyState } from "@/components/empty-state/simple-empty-state-root";
+// [ours: terminology] Operator fork — per-project label override (ENG-119)
+import { useProjectTerminology } from "@/hooks/use-project-terminology";
 
 export type ActiveCycleProgressProps = {
   cycle: ICycle | null;
@@ -26,11 +28,13 @@ export type ActiveCycleProgressProps = {
 };
 
 export const ActiveCycleProgress = observer(function ActiveCycleProgress(props: ActiveCycleProgressProps) {
-  const { handleFiltersUpdate, cycle } = props;
+  const { handleFiltersUpdate, cycle, projectId } = props;
   // theme hook
   const { resolvedTheme } = useTheme();
   // plane hooks
   const { t } = useTranslation();
+  // [ours: terminology] per-project label override (ENG-119)
+  const term = useProjectTerminology(projectId);
   // derived values
   const progressIndicatorData = PROGRESS_STATE_GROUPS_DETAILS.map((group, index) => ({
     id: index,
@@ -55,8 +59,9 @@ export const ActiveCycleProgress = observer(function ActiveCycleProgress(props: 
           <h3 className="text-14 font-semibold text-tertiary">{t("project_cycles.active_cycle.progress")}</h3>
           {cycle.total_issues > 0 && (
             <span className="flex gap-1 rounded-xs px-3 py-1 text-13 font-medium whitespace-nowrap text-placeholder">
+              {/* [ours: terminology] per-project labels (ENG-119) */}
               {`${cycle.completed_issues + cycle.cancelled_issues}/${cycle.total_issues - cycle.cancelled_issues} ${
-                cycle.completed_issues + cycle.cancelled_issues > 1 ? "Work items" : "Work item"
+                cycle.completed_issues + cycle.cancelled_issues > 1 ? term.plural : term.singular
               } closed`}
             </span>
           )}
@@ -85,8 +90,9 @@ export const ActiveCycleProgress = observer(function ActiveCycleProgress(props: 
                       />
                       <span className="w-16 font-medium text-tertiary capitalize">{group}</span>
                     </div>
+                    {/* [ours: terminology] per-project labels (ENG-119) */}
                     <span className="text-tertiary">{`${groupedIssues[group]} ${
-                      groupedIssues[group] > 1 ? "Work items" : "Work item"
+                      groupedIssues[group] > 1 ? term.plural : term.singular
                     }`}</span>
                   </div>
                 </div>
@@ -96,8 +102,9 @@ export const ActiveCycleProgress = observer(function ActiveCycleProgress(props: 
           {cycle.cancelled_issues > 0 && (
             <span className="flex items-center gap-2 text-13 text-tertiary">
               <span>
+                {/* [ours: terminology] per-project labels (ENG-119) */}
                 {`${cycle.cancelled_issues} cancelled ${
-                  cycle.cancelled_issues > 1 ? "work items are" : "work item is"
+                  cycle.cancelled_issues > 1 ? `${term.plural.toLowerCase()} are` : `${term.singular.toLowerCase()} is`
                 } excluded from this report.`}{" "}
               </span>
             </span>

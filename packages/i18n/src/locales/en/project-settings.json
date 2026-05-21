@@ -176,6 +176,11 @@
       "current": "Current estimate system",
       "select": "Select an estimate system"
     },
+    "terminology": {
+      "label": "Terminology",
+      "heading": "Terminology",
+      "description": "Customise the singular, plural, and create-action labels used in this project's UI. Empty fields fall back to operator defaults."
+    },
     "automations": {
       "label": "Automations",
       "heading": "Automations",

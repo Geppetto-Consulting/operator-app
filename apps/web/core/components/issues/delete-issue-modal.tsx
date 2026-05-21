@@ -19,6 +19,8 @@ import { AlertModalCore } from "@plane/ui";
 import { useIssues } from "@/hooks/store/use-issues";
 import { useProject } from "@/hooks/store/use-project";
 import { useUser, useUserPermissions } from "@/hooks/store/user";
+// [ours: terminology] Operator fork — per-project label override (ENG-119)
+import { useProjectTerminology } from "@/hooks/use-project-terminology";
 // plane-web
 
 type Props = {
@@ -54,6 +56,9 @@ export const DeleteIssueModal = observer(function DeleteIssueModal(props: Props)
   const issue = data ? data : issueMap[dataId!];
   const projectDetails = getProjectById(issue?.project_id);
   const isIssueCreator = issue?.created_by === currentUser?.id;
+  // [ours: terminology] per-project label override (ENG-119)
+  const term = useProjectTerminology(issue?.project_id);
+  const lowerSingular = term.singular.toLowerCase();
 
   const canPerformProjectAdminActions = allowPermissions(
     [EUserPermissions.ADMIN],
@@ -89,7 +94,8 @@ export const DeleteIssueModal = observer(function DeleteIssueModal(props: Props)
             type: TOAST_TYPE.SUCCESS,
             title: t("common.success"),
             message: t("entity.delete.success", {
-              entity: isSubIssue ? t("common.sub_work_item") : isEpic ? t("common.epic") : t("common.work_item"),
+              /* [ours: terminology] use per-project label for non-epic/sub cases (ENG-119) */
+              entity: isSubIssue ? t("common.sub_work_item") : isEpic ? t("common.epic") : term.singular,
             }),
           });
           onClose();
@@ -116,15 +122,16 @@ export const DeleteIssueModal = observer(function DeleteIssueModal(props: Props)
       handleSubmit={handleIssueDelete}
       isSubmitting={isDeleting}
       isOpen={isOpen}
-      title={t("entity.delete.label", { entity: isEpic ? t("common.epic") : t("common.work_item") })}
+      /* [ours: terminology] per-project label in delete modal title + body (ENG-119) */
+      title={t("entity.delete.label", { entity: isEpic ? t("common.epic") : term.singular })}
       content={
         <>
           {/* TODO: Translate here */}
-          {`Are you sure you want to delete ${isEpic ? "epic" : "work item"} `}
+          {`Are you sure you want to delete ${isEpic ? "epic" : lowerSingular} `}
           <span className="font-medium break-words text-primary">
             {projectDetails?.identifier}-{issue?.sequence_id}
           </span>
-          {` ? All of the data related to the ${isEpic ? "epic" : "work item"} will be permanently removed. This action cannot be undone.`}
+          {` ? All of the data related to the ${isEpic ? "epic" : lowerSingular} will be permanently removed. This action cannot be undone.`}
         </>
       }
     />

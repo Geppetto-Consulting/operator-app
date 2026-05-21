@@ -19,6 +19,8 @@ import { ExistingIssuesListModal } from "@/components/core/modals/existing-issue
 import { CreateUpdateIssueModal } from "@/components/issues/issue-modal/modal";
 // constants
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
+// [ours: terminology] Operator fork — per-project label override (ENG-119)
+import { useProjectTerminology } from "@/hooks/use-project-terminology";
 import { CreateUpdateEpicModal } from "@/plane-web/components/epics/epic-modal";
 // types
 // Plane-web
@@ -60,6 +62,8 @@ export const HeaderGroupByCard = observer(function HeaderGroupByCard(props: IHea
   const [openExistingIssueListModal, setOpenExistingIssueListModal] = React.useState(false);
   // hooks
   const storeType = useIssueStoreType();
+  // [ours: terminology] per-project label override (ENG-119)
+  const term = useProjectTerminology();
   // router
   const { workspaceSlug, projectId, moduleId, cycleId } = useParams();
 
@@ -169,14 +173,16 @@ export const HeaderGroupByCard = observer(function HeaderGroupByCard(props: IHea
                   setIsOpen(true);
                 }}
               >
-                <span className="flex items-center justify-start gap-2">Create work item</span>
+                {/* [ours: terminology] per-project create label (ENG-119) */}
+                <span className="flex items-center justify-start gap-2">{`Create ${term.singular.toLowerCase()}`}</span>
               </CustomMenu.MenuItem>
               <CustomMenu.MenuItem
                 onClick={() => {
                   setOpenExistingIssueListModal(true);
                 }}
               >
-                <span className="flex items-center justify-start gap-2">Add an existing work item</span>
+                {/* [ours: terminology] per-project add-existing label (ENG-119) */}
+                <span className="flex items-center justify-start gap-2">{`Add an existing ${term.singular.toLowerCase()}`}</span>
               </CustomMenu.MenuItem>
             </CustomMenu>
           ) : (

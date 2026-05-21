@@ -20,6 +20,8 @@ import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
+// [ours: terminology] Operator fork — per-project work-item label override (ENG-119)
+import { useProjectTerminology } from "@/hooks/use-project-terminology";
 
 export type TNavigationItem = {
   name: string;
@@ -43,6 +45,8 @@ export const ProjectNavigation = observer(function ProjectNavigation(props: TPro
   const { workItem: workItemIdentifierFromRoute } = useParams();
   // store hooks
   const { t } = useTranslation();
+  // [ours: terminology] resolve per-project label for the "Work items" nav entry (ENG-119)
+  const term = useProjectTerminology(projectId);
   const { isExtendedProjectSidebarOpened, toggleExtendedProjectSidebar, toggleSidebar } = useAppTheme();
   const { getPartialProjectById } = useProject();
   const { allowPermissions } = useUserPermissions();
@@ -191,7 +195,10 @@ export const ProjectNavigation = observer(function ProjectNavigation(props: TPro
                   <item.icon
                     className={`size-4 flex-shrink-0 ${item.name === "Intake" ? "stroke-1" : "stroke-[1.5]"}`}
                   />
-                  <span className="text-11 font-medium">{t(item.i18n_key)}</span>
+                  {/* [ours: terminology] override work_items label per-project (ENG-119) */}
+                  <span className="text-11 font-medium">
+                    {item.key === "work_items" ? term.plural : t(item.i18n_key)}
+                  </span>
                 </div>
                 {shouldShowCount && <span className="text-11 font-medium text-tertiary">{project.intake_count}</span>}
               </div>
