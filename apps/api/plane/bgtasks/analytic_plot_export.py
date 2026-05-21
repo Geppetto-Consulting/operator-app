@@ -12,13 +12,13 @@ from celery import shared_task
 
 # Django imports
 from django.core.mail import EmailMultiAlternatives, get_connection
-from plane.utils.brand_context import render_email_template
+from plane.utils.brand_context import render_email_template, workspace_brand_context
 from django.db.models import Q, Case, Value, When
 from django.db import models
 from django.db.models.functions import Concat
 
 # Module imports
-from plane.db.models import Issue
+from plane.db.models import Issue, Workspace
 from plane.license.utils.instance_value import get_email_configuration
 from plane.utils.analytics_plot import build_graph_plot
 from plane.utils.email import generate_plain_text_from_html
@@ -52,7 +52,14 @@ MODULE_ID = "issue_module__module_id"
 def send_export_email(email, slug, csv_buffer, rows):
     """Helper function to send export email."""
     subject = "Your Export is ready"
-    html_content = render_email_template("emails/exports/analytics.html", {})
+    # [ours: brand] ENG-114 — resolve workspace brand context by slug. We swallow
+    # DoesNotExist here because the export bgtask should not fail on branding;
+    # missing workspace just yields operator defaults.
+    workspace = Workspace.objects.filter(slug=slug).first()
+    html_content = render_email_template(
+        "emails/exports/analytics.html",
+        workspace_brand_context(workspace),
+    )
     text_content = generate_plain_text_from_html(html_content)
 
     csv_buffer.seek(0)

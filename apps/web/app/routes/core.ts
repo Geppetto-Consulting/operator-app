@@ -282,6 +282,11 @@ export const coreRoutes: RouteConfigEntry[] = [
             ":workspaceSlug/settings/webhooks/:webhookId",
             "./(all)/[workspaceSlug]/(settings)/settings/(workspace)/webhooks/[webhookId]/page.tsx"
           ),
+          // [ours: brand] ENG-114 / Phase 2 — per-workspace branding.
+          route(
+            ":workspaceSlug/settings/branding",
+            "./(all)/[workspaceSlug]/(settings)/settings/(workspace)/branding/page.tsx"
+          ),
         ]),
 
         // --------------------------------------------------------------------

@@ -11,7 +11,7 @@ from celery import shared_task
 # Django imports
 # Third party imports
 from django.core.mail import EmailMultiAlternatives, get_connection
-from plane.utils.brand_context import render_email_template
+from plane.utils.brand_context import render_email_template, workspace_brand_context
 
 # Module imports
 from plane.db.models import Project, ProjectMemberInvite, User
@@ -38,6 +38,8 @@ def project_invitation(email, project_id, token, current_site, invitor):
             "project_name": project.name,
             "invitation_url": abs_url,
             "current_site": current_site,
+            # [ours: brand] ENG-114 — workspace-level branding.
+            **workspace_brand_context(project.workspace),
         }
 
         html_content = render_email_template("emails/invitations/project_invitation.html", context)

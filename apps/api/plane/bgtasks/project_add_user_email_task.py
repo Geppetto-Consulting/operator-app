@@ -10,7 +10,7 @@ from celery import shared_task
 
 # Third party imports
 from django.core.mail import EmailMultiAlternatives, get_connection
-from plane.utils.brand_context import render_email_template
+from plane.utils.brand_context import render_email_template, workspace_brand_context
 
 
 # Module imports
@@ -41,6 +41,8 @@ def project_add_user_email(current_site, project_member_id, invitor_id):
             "email": member_email,
             "inviter_first_name": inviter_first_name,
             "project_url": project_url,
+            # [ours: brand] ENG-114 — workspace-level branding.
+            **workspace_brand_context(project_member.workspace),
         }
 
         # Get the email configuration
