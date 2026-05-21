@@ -10,6 +10,9 @@ export { TranslationProvider } from "./provider";
 // Hooks
 export { useTranslation } from "./hooks/use-translation";
 export type { TTranslationStore } from "./hooks/use-translation";
+// [ours: terminology] operator fork — see ENG-118
+export { useTerminology, resolveTerminology, OPERATOR_DEFAULT_TERMINOLOGY } from "./hooks/use-terminology";
+export type { TProjectTerminology, TResolvedTerminology } from "./hooks/use-terminology";
 
 // Types
 export type { TLanguage, ILanguageOption } from "./types";

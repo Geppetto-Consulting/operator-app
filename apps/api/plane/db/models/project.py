@@ -110,6 +110,11 @@ class Project(BaseModel):
     archive_in = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(12)])
     close_in = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(12)])
     logo_props = models.JSONField(default=dict)
+    # [ours: terminology] Per-project terminology override (operator fork).
+    # Shape: { "singular": str, "plural": str, "verb_create": str }. Empty dict
+    # means "use operator defaults" — the frontend useTerminology() hook falls
+    # back to OPERATOR_DEFAULT_TERMINOLOGY when keys are missing.
+    terminology = models.JSONField(default=dict, blank=True)
     default_state = models.ForeignKey("db.State", on_delete=models.SET_NULL, null=True, related_name="default_state")
     archived_at = models.DateTimeField(null=True)
     # timezone

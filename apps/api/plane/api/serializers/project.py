@@ -92,6 +92,8 @@ class ProjectCreateSerializer(BaseSerializer):
             "external_id",
             "is_issue_type_enabled",
             "is_time_tracking_enabled",
+            # [ours: terminology] operator fork — see ENG-118
+            "terminology",
         ]
 
         read_only_fields = [

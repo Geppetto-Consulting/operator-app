@@ -42,6 +42,15 @@ export interface IPartialProject {
   intake_count?: number;
 }
 
+// [ours: terminology] Operator fork — per-project terminology override.
+// Empty / missing keys fall back to OPERATOR_DEFAULT_TERMINOLOGY in the
+// useTerminology() hook (see @plane/i18n). See ENG-118 / ENG-119.
+export type TProjectTerminology = {
+  singular?: string;
+  plural?: string;
+  verb_create?: string;
+};
+
 export interface IProject extends IPartialProject {
   archive_in?: number;
   close_in?: number;
@@ -59,6 +68,8 @@ export interface IProject extends IPartialProject {
   members?: string[];
   timezone?: string;
   next_work_item_sequence?: number;
+  // [ours: terminology] operator fork — see ENG-118
+  terminology?: TProjectTerminology;
 }
 
 export type TProjectAnalyticsCountParams = {
