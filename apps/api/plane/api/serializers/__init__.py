@@ -65,3 +65,4 @@ from .invite import WorkspaceInviteSerializer
 from .member import ProjectMemberSerializer
 from .sticky import StickySerializer
 from .view import IssueViewAPISerializer
+from .page import PageAPISerializer
