@@ -12,6 +12,8 @@ import { useTranslation } from "@plane/i18n";
 import type { TIssueOrderByOptions } from "@plane/types";
 // helpers
 import { cn } from "@plane/utils";
+// [ours: terminology] project-aware drop-target copy (ENG-157)
+import { useProjectTerminology } from "@/hooks/use-project-terminology";
 // plane web imports
 import { WorkFlowDisabledOverlay } from "@/plane-web/components/workflow";
 
@@ -39,6 +41,8 @@ export function GroupDragOverlay(props: Props) {
   } = props;
   // hooks
   const { t } = useTranslation();
+  // [ours: terminology] resolve current project's terminology
+  const term = useProjectTerminology();
   // refs
   const messageContainerRef = useRef<HTMLDivElement>(null);
 
@@ -84,7 +88,7 @@ export function GroupDragOverlay(props: Props) {
                   {t("issue.layouts.ordered_by_label")} <span className="font-semibold">{t(readableOrderBy)}</span>.
                 </span>
               )}
-              <span>{t("entity.drop_here_to_move", { entity: isEpic ? "epic" : "work item" })}</span>
+              <span>{t("entity.drop_here_to_move", { entity: isEpic ? "epic" : term.singular.toLowerCase() })}</span>
             </>
           )}
         </div>

@@ -46,6 +46,8 @@ import { useAppRouter } from "@/hooks/use-app-router";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
 import useLocalStorage from "@/hooks/use-local-storage";
 import { usePlatformOS } from "@/hooks/use-platform-os";
+// [ours: terminology] project-aware terminology for module-detail breadcrumb tooltip (ENG-157)
+import { useProjectTerminology } from "@/hooks/use-project-terminology";
 // plane web imports
 import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
 import { IconButton } from "@plane/propel/icon-button";
@@ -71,6 +73,8 @@ export const ModuleIssuesHeader = observer(function ModuleIssuesHeader() {
   const { toggleCreateIssueModal } = useCommandPalette();
   const { allowPermissions } = useUserPermissions();
   const { currentProjectDetails, loader } = useProject();
+  // [ours: terminology] resolve project terminology for breadcrumb tooltip
+  const term = useProjectTerminology(projectId?.toString());
   // local storage
   const { setValue, storedValue } = useLocalStorage("module_sidebar_collapsed", "false");
   // derived values
@@ -166,7 +170,7 @@ export const ModuleIssuesHeader = observer(function ModuleIssuesHeader() {
               <Tooltip
                 isMobile={isMobile}
                 tooltipContent={`There are ${workItemsCount} ${
-                  workItemsCount > 1 ? "work items" : "work item"
+                  workItemsCount > 1 ? term.plural.toLowerCase() : term.singular.toLowerCase()
                 } in this module`}
                 position="bottom"
               >

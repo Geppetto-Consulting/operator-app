@@ -33,6 +33,8 @@ type Options = {
   label: string;
 };
 
+// [ours: terminology] static fallback retained for surfaces without project context (ENG-157);
+// project-aware label is composed in callers via useProjectTerminology.
 export const cycleEstimateOptions: Options[] = [
   { value: "issues", label: "Work items" },
   { value: "points", label: "Estimates" },

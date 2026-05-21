@@ -14,6 +14,8 @@ import { BreadcrumbLink } from "@/components/common/breadcrumb-link";
 import type { TNavigationItem } from "@/components/workspace/sidebar/project-navigation";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
+// [ours: terminology] project-aware feature-breadcrumb label (ENG-157)
+import { useProjectTerminology } from "@/hooks/use-project-terminology";
 // local imports
 import { getProjectFeatureNavigation } from "../projects/navigation/helper";
 
@@ -31,6 +33,8 @@ export const ProjectFeatureBreadcrumb = observer(function ProjectFeatureBreadcru
   const { workspaceSlug, projectId, featureKey, isLast = false, additionalNavigationItems } = props;
   // store hooks
   const { getPartialProjectById } = useProject();
+  // [ours: terminology] resolve project terminology for the work_items entry
+  const term = useProjectTerminology(projectId);
   // derived values
   const project = getPartialProjectById(projectId);
 
@@ -43,7 +47,11 @@ export const ProjectFeatureBreadcrumb = observer(function ProjectFeatureBreadcru
 
   const currentNavigationItem = allNavigationItems.find((item) => item.key === featureKey);
   const icon = currentNavigationItem?.icon as ReactNode;
-  const name = currentNavigationItem?.name;
+  // [ours: terminology] swap the work_items default label with the project term
+  const name =
+    currentNavigationItem?.key === "WORK_ITEMS" || currentNavigationItem?.name === "Work items"
+      ? term.plural
+      : currentNavigationItem?.name;
   const href = currentNavigationItem?.href;
 
   return (

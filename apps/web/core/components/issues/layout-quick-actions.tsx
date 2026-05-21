@@ -10,6 +10,8 @@ import type { TContextMenuItem } from "@plane/ui";
 import { CustomMenu } from "@plane/ui";
 import { copyUrlToClipboard, cn } from "@plane/utils";
 import { useLayoutMenuItems } from "@/components/common/quick-actions-helper";
+// [ours: terminology] project-aware copy-link toast (ENG-157)
+import { useProjectTerminology } from "@/hooks/use-project-terminology";
 import { Ellipsis } from "lucide-react";
 import { IconButton } from "@plane/propel/icon-button";
 
@@ -21,6 +23,8 @@ type Props = {
 
 export const LayoutQuickActions = observer(function LayoutQuickActions(props: Props) {
   const { workspaceSlug, projectId, storeType } = props;
+  // [ours: terminology] resolve project terminology for copy-link toast
+  const term = useProjectTerminology(projectId);
 
   const layoutLink = `${workspaceSlug}/projects/${projectId}/${storeType === "EPIC" ? "epics" : "issues"}`;
 
@@ -29,7 +33,7 @@ export const LayoutQuickActions = observer(function LayoutQuickActions(props: Pr
       setToast({
         type: TOAST_TYPE.SUCCESS,
         title: "Link copied",
-        message: `${storeType === "EPIC" ? "Epics" : "Work items"} link copied to clipboard.`,
+        message: `${storeType === "EPIC" ? "Epics" : term.plural} link copied to clipboard.`,
       });
     });
 

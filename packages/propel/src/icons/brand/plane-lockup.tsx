@@ -8,7 +8,8 @@ import * as React from "react";
 
 import type { ISvgIcons } from "../type";
 
-export function PlaneLockup({ width = "253", height = "53", className, color = "currentColor" }: ISvgIcons) {
+// [ours: brand] renamed PlaneLockup → BrandLockup (brand-strip long-tail, ENG-144)
+export function BrandLockup({ width = "253", height = "53", className, color = "currentColor" }: ISvgIcons) {
   return (
     <svg
       width={width}

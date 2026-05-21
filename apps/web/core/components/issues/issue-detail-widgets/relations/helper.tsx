@@ -13,6 +13,8 @@ import { EIssueServiceType } from "@plane/types";
 import { copyUrlToClipboard } from "@plane/utils";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
+// [ours: terminology] project-aware entity name for relation toasts (ENG-157)
+import { useProjectTerminology } from "@/hooks/use-project-terminology";
 
 export type TRelationIssueOperations = {
   copyLink: (path: string) => void;
@@ -25,8 +27,11 @@ export const useRelationOperations = (
 ): TRelationIssueOperations => {
   const { updateIssue, removeIssue } = useIssueDetail(issueServiceType);
   const { t } = useTranslation();
+  // [ours: terminology] resolve project terminology — uses the currently routed
+  // project (relation operations always fire from within an issue detail surface).
+  const term = useProjectTerminology();
   // derived values
-  const entityName = issueServiceType === EIssueServiceType.ISSUES ? "Work item" : "Epic";
+  const entityName = issueServiceType === EIssueServiceType.ISSUES ? term.singular : "Epic";
 
   const issueOperations: TRelationIssueOperations = useMemo(
     () => ({
@@ -58,6 +63,7 @@ export const useRelationOperations = (
         return removeIssue(workspaceSlug, projectId, issueId);
       },
     }),
+    // entityName already depends on term; deps array unchanged in identity
     [entityName, removeIssue, t, updateIssue]
   );
 

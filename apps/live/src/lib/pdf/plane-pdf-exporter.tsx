@@ -70,7 +70,8 @@ export const createPdfDocument = (doc: TipTapDocument, options: PDFExportOptions
   );
 };
 
-export const renderPlaneDocToPdfBuffer = async (
+// [ours: brand] renamed renderPlaneDocToPdfBuffer/Blob → renderDocToPdfBuffer/Blob (ENG-144)
+export const renderDocToPdfBuffer = async (
   doc: TipTapDocument,
   options: PDFExportOptions = {}
 ): Promise<Buffer> => {
@@ -81,7 +82,7 @@ export const renderPlaneDocToPdfBuffer = async (
   return Buffer.from(arrayBuffer);
 };
 
-export const renderPlaneDocToPdfBlob = async (doc: TipTapDocument, options: PDFExportOptions = {}): Promise<Blob> => {
+export const renderDocToPdfBlob = async (doc: TipTapDocument, options: PDFExportOptions = {}): Promise<Blob> => {
   const pdfDocument = createPdfDocument(doc, options);
   const pdfInstance = pdf(pdfDocument);
   return await pdfInstance.toBlob();
