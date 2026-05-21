@@ -70,6 +70,7 @@ from .view import (
     ProjectViewListCreateAPIEndpoint,
     ProjectViewDetailAPIEndpoint,
 )
+
 from .page import (
     PageListCreateAPIEndpoint,
     PageDetailAPIEndpoint,
