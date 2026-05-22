@@ -93,7 +93,7 @@ export const Dashboard = observer(function Dashboard({ workspaceSlug, projectId 
               <div
                 key={widget.id}
                 className={cn(
-                  "border-default-100 min-h-[180px] animate-pulse rounded-md border bg-surface-1",
+                  "border-custom-border-200 bg-custom-background-90 min-h-[180px] animate-pulse rounded-lg border",
                   SIZE_CLASS[size]
                 )}
               />

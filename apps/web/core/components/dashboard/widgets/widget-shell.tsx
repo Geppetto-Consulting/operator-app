@@ -4,8 +4,10 @@
  * See the LICENSE file for details.
  */
 
-// [ours: project dashboards] Operator fork — see ENG-177 / ENG-178 / ENG-179.
-// Shared shell for the 5 project-dashboard widget components.
+// [ours: project dashboards] Operator fork — shared shell for dashboard widgets.
+// Matches Plane's existing card pattern (bg-custom-background-100, subtle
+// border, soft typography) rather than the heavy black borders of the
+// initial ENG-179 ship.
 
 import type { ReactNode } from "react";
 import { cn } from "@plane/utils";
@@ -21,13 +23,13 @@ export function WidgetShell({ title, children, className, headerRight }: TWidget
   return (
     <div
       className={cn(
-        "border-default-100 flex flex-col gap-3 rounded-md border bg-surface-1 p-4",
-        "min-h-[180px]",
+        "border-custom-border-200 bg-custom-background-100 flex flex-col gap-2.5 rounded-lg border p-4",
+        "hover:border-custom-border-300 transition-colors",
         className
       )}
     >
-      <div className="flex items-center justify-between">
-        <h3 className="text-14 font-semibold text-tertiary">{title}</h3>
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-sm text-custom-text-200 font-medium">{title}</h3>
         {headerRight}
       </div>
       <div className="flex flex-1 flex-col">{children}</div>
@@ -36,5 +38,5 @@ export function WidgetShell({ title, children, className, headerRight }: TWidget
 }
 
 export function WidgetEmpty({ message }: { message: string }) {
-  return <div className="flex flex-1 items-center justify-center py-6 text-13 text-placeholder">{message}</div>;
+  return <div className="text-sm text-custom-text-400 flex flex-1 items-center justify-center py-6">{message}</div>;
 }
