@@ -113,6 +113,13 @@ class ProjectLiteSerializer(BaseSerializer):
             # load — without this, the sidebar showed "Work items" until the
             # user clicked into the project and fetched the full detail.
             "terminology",
+            # [ours: dashboards] ENG-178 — the dashboard chrome reads
+            # project.dashboard_config straight off the project payload to
+            # decide which widgets to render before the dashboard-data
+            # request returns. Without this in the lite serializer the
+            # sidebar/nav surface would flicker into "no dashboard" until
+            # the full detail fetch completed.
+            "dashboard_config",
         ]
         read_only_fields = fields
 

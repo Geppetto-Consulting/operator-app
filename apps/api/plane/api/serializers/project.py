@@ -94,6 +94,12 @@ class ProjectCreateSerializer(BaseSerializer):
             "is_time_tracking_enabled",
             # [ours: terminology] operator fork — see ENG-118
             "terminology",
+            # [ours: dashboards] operator fork — ENG-178. Public API can
+            # both seed (on create) and reconfigure (via update) the
+            # per-project dashboard configuration. Tools like
+            # admin_provision_modules / provision_module_dashboard use
+            # this column on the create/patch path.
+            "dashboard_config",
         ]
 
         read_only_fields = [
@@ -320,5 +326,10 @@ class ProjectLiteSerializer(BaseSerializer):
             "emoji",
             "description",
             "cover_image_url",
+            # [ours: dashboards] operator fork — ENG-178. Surface the
+            # agent-managed dashboard config alongside the project ref
+            # so callers can decide whether to render a Dashboard button
+            # without a second round-trip.
+            "dashboard_config",
         ]
         read_only_fields = fields

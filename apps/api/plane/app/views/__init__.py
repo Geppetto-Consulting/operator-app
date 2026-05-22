@@ -11,6 +11,9 @@ from .project.base import (
     ProjectArchiveUnarchiveEndpoint,
 )
 
+# [ours: dashboards] ENG-178 — per-project agent-configured dashboards.
+from .project.dashboard import DashboardDataEndpoint
+
 from .project.invite import (
     UserProjectInvitationsViewset,
     ProjectInvitationsViewset,
