@@ -463,6 +463,343 @@ class TestDashboardDataWidgets:
 
 
 @pytest.mark.contract
+class TestPipelineFunnelWidget:
+    """ENG-198 — pipeline_funnel: per-state counts ordered by State.sequence
+    + a conversion % (completed / non-cancelled). Conversion is null when
+    total is 0 (don't lie about empty data)."""
+
+    @pytest.mark.django_db
+    def test_pipeline_funnel_returns_stages_ordered_by_sequence(
+        self, session_client, workspace, project, states, create_user
+    ):
+        """Stages emit one entry per state, ordered by State.sequence (Plane's
+        canonical pipeline order). Counts include 0 so the chart axis is stable."""
+        # 2 in Backlog, 1 in In Progress, 1 in Done.
+        for _ in range(2):
+            Issue.objects.create(
+                name="b", workspace=workspace, project=project,
+                state=states["backlog"], created_by=create_user,
+            )
+        Issue.objects.create(
+            name="ip", workspace=workspace, project=project,
+            state=states["started"], created_by=create_user,
+        )
+        Issue.objects.create(
+            name="d", workspace=workspace, project=project,
+            state=states["completed"], created_by=create_user,
+        )
+
+        project.dashboard_config = {
+            "widgets": [{"id": "wf", "type": "pipeline_funnel", "title": "Funnel"}],
+        }
+        project.save(update_fields=["dashboard_config"])
+
+        response = session_client.get(_dashboard_url(workspace.slug, project.id))
+        assert response.status_code == status.HTTP_200_OK
+        widget = response.data["widgets"]["wf"]
+        assert widget["type"] == "pipeline_funnel"
+        data = widget["data"]
+
+        # 5 states, all surfaced (incl. cancelled even with 0 count).
+        names = [s["name"] for s in data["stages"]]
+        assert names == ["Backlog", "Todo", "In Progress", "Done", "Cancelled"]
+        counts = {s["name"]: s["count"] for s in data["stages"]}
+        assert counts == {"Backlog": 2, "Todo": 0, "In Progress": 1, "Done": 1, "Cancelled": 0}
+        # total excludes cancelled (0 here so equal to all), conversion = 1/4 = 0.25.
+        assert data["total"] == 4
+        assert abs(data["conversion_pct"] - 0.25) < 1e-9
+        # Stages carry state_id + color for the frontend stacked-bar render.
+        for s in data["stages"]:
+            assert "state_id" in s and "color" in s
+
+    @pytest.mark.django_db
+    def test_pipeline_funnel_conversion_null_when_empty(
+        self, session_client, workspace, project, states
+    ):
+        """No issues at all → conversion_pct is null, not 0 (audit-trail honesty
+        about empty data)."""
+        project.dashboard_config = {
+            "widgets": [{"id": "wf", "type": "pipeline_funnel", "title": "Funnel"}],
+        }
+        project.save(update_fields=["dashboard_config"])
+
+        response = session_client.get(_dashboard_url(workspace.slug, project.id))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.data["widgets"]["wf"]["data"]
+        assert data["total"] == 0
+        assert data["conversion_pct"] is None
+        # Stages still emitted (zero-fill) so the frontend can render an
+        # empty funnel rather than nothing.
+        assert len(data["stages"]) == 5
+
+    @pytest.mark.django_db
+    def test_pipeline_funnel_excludes_cancelled_from_conversion(
+        self, session_client, workspace, project, states, create_user
+    ):
+        """Conversion uses non-cancelled total — a project with 1 won and 1
+        cancelled should not appear as 50% conversion."""
+        Issue.objects.create(
+            name="won", workspace=workspace, project=project,
+            state=states["completed"], created_by=create_user,
+        )
+        Issue.objects.create(
+            name="lost", workspace=workspace, project=project,
+            state=states["cancelled"], created_by=create_user,
+        )
+
+        project.dashboard_config = {
+            "widgets": [{"id": "wf", "type": "pipeline_funnel", "title": "Funnel"}],
+        }
+        project.save(update_fields=["dashboard_config"])
+
+        response = session_client.get(_dashboard_url(workspace.slug, project.id))
+        data = response.data["widgets"]["wf"]["data"]
+        # total excludes cancelled → 1; conversion = 1/1 = 1.0.
+        assert data["total"] == 1
+        assert abs(data["conversion_pct"] - 1.0) < 1e-9
+
+
+@pytest.mark.contract
+class TestVelocityWidget:
+    """ENG-198 — velocity: per-week count of closed issues, trend across halves."""
+
+    @pytest.mark.django_db
+    def test_velocity_buckets_completed_issues_by_week(
+        self, session_client, workspace, project, states, create_user
+    ):
+        """Issues with state.group=completed are bucketed by completed_at's
+        ISO week. Issues without completed_at fall back to updated_at."""
+        from datetime import timedelta
+        from django.utils import timezone
+
+        now = timezone.now()
+
+        # 2 closed in current week (auto-stamped completed_at), 1 in week-1.
+        for _ in range(2):
+            Issue.objects.create(
+                name="this-week",
+                workspace=workspace,
+                project=project,
+                state=states["completed"],
+                created_by=create_user,
+            )
+
+        old = Issue.objects.create(
+            name="last-week",
+            workspace=workspace,
+            project=project,
+            state=states["completed"],
+            created_by=create_user,
+        )
+        # Override completed_at to last week so the bucketing is testable
+        # without depending on real wall-clock drift across runs.
+        Issue.objects.filter(pk=old.pk).update(completed_at=now - timedelta(days=8))
+
+        project.dashboard_config = {
+            "widgets": [{"id": "wv", "type": "velocity", "title": "Velocity", "weeks": 4}],
+        }
+        project.save(update_fields=["dashboard_config"])
+
+        response = session_client.get(_dashboard_url(workspace.slug, project.id))
+        assert response.status_code == status.HTTP_200_OK
+        widget = response.data["widgets"]["wv"]
+        assert widget["type"] == "velocity"
+        data = widget["data"]
+        # 4 week-buckets requested, all returned (oldest first).
+        assert len(data["weeks"]) == 4
+        # Each bucket has the expected keys.
+        for wk in data["weeks"]:
+            assert set(wk.keys()) == {"week_start", "closed"}
+        # Total = 3 (2 this-week + 1 last-week).
+        assert data["total"] == 3
+
+    @pytest.mark.django_db
+    def test_velocity_trend_null_when_first_half_empty(
+        self, session_client, workspace, project, states, create_user
+    ):
+        """If the first half of the window has 0 closed issues, trend_pct is
+        null (don't return infinity, don't return a misleading 100%)."""
+        from datetime import timedelta
+        from django.utils import timezone
+
+        now = timezone.now()
+        # Only close one issue in the very recent week; first half remains 0.
+        Issue.objects.create(
+            name="recent",
+            workspace=workspace,
+            project=project,
+            state=states["completed"],
+            created_by=create_user,
+        )
+
+        project.dashboard_config = {
+            "widgets": [{"id": "wv", "type": "velocity", "title": "Velocity", "weeks": 4}],
+        }
+        project.save(update_fields=["dashboard_config"])
+
+        response = session_client.get(_dashboard_url(workspace.slug, project.id))
+        data = response.data["widgets"]["wv"]["data"]
+        assert data["total"] >= 1
+        # First half (oldest 2 weeks) is 0 — trend should be null.
+        assert data["trend_pct"] is None
+
+    @pytest.mark.django_db
+    def test_velocity_empty_returns_zero_buckets(
+        self, session_client, workspace, project, states
+    ):
+        """No closed issues at all → all buckets are 0, total is 0, trend is null."""
+        project.dashboard_config = {
+            "widgets": [{"id": "wv", "type": "velocity", "title": "Velocity", "weeks": 6}],
+        }
+        project.save(update_fields=["dashboard_config"])
+
+        response = session_client.get(_dashboard_url(workspace.slug, project.id))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.data["widgets"]["wv"]["data"]
+        assert data["total"] == 0
+        assert data["trend_pct"] is None
+        assert len(data["weeks"]) == 6
+        assert all(wk["closed"] == 0 for wk in data["weeks"])
+
+
+@pytest.mark.contract
+class TestTouchpointDueWidget:
+    """ENG-198 — touchpoint_due: stale items, oldest-first, capped at limit."""
+
+    @pytest.mark.django_db
+    def test_touchpoint_due_returns_stale_issues_oldest_first(
+        self, session_client, workspace, project, states, create_user
+    ):
+        """Issues whose updated_at is older than now-stale_days surface,
+        ordered oldest-first."""
+        from datetime import timedelta
+        from django.utils import timezone
+
+        now = timezone.now()
+
+        # Fresh (1 day ago) — shouldn't surface.
+        fresh = Issue.objects.create(
+            name="Fresh",
+            workspace=workspace,
+            project=project,
+            state=states["backlog"],
+            created_by=create_user,
+        )
+        # Stale 20 days, stale 40 days.
+        stale_20 = Issue.objects.create(
+            name="Stale 20",
+            workspace=workspace,
+            project=project,
+            state=states["backlog"],
+            created_by=create_user,
+        )
+        stale_40 = Issue.objects.create(
+            name="Stale 40",
+            workspace=workspace,
+            project=project,
+            state=states["backlog"],
+            created_by=create_user,
+        )
+        # Done — even if stale, should be excluded.
+        Issue.objects.create(
+            name="Stale but done",
+            workspace=workspace,
+            project=project,
+            state=states["completed"],
+            created_by=create_user,
+        )
+
+        # Backfill updated_at via .update() to skip the auto_now bump.
+        Issue.objects.filter(pk=fresh.pk).update(updated_at=now - timedelta(days=1))
+        Issue.objects.filter(pk=stale_20.pk).update(updated_at=now - timedelta(days=20))
+        Issue.objects.filter(pk=stale_40.pk).update(updated_at=now - timedelta(days=40))
+
+        project.dashboard_config = {
+            "widgets": [
+                {
+                    "id": "wt",
+                    "type": "touchpoint_due",
+                    "title": "Stale items",
+                    "stale_days": 14,
+                    "limit": 10,
+                }
+            ],
+        }
+        project.save(update_fields=["dashboard_config"])
+
+        response = session_client.get(_dashboard_url(workspace.slug, project.id))
+        assert response.status_code == status.HTTP_200_OK
+        widget = response.data["widgets"]["wt"]
+        assert widget["type"] == "touchpoint_due"
+        data = widget["data"]
+        assert data["stale_threshold_days"] == 14
+
+        issues = data["issues"]
+        # Only the 2 backlog stale issues — completed excluded, fresh excluded.
+        assert len(issues) == 2
+        # Oldest first.
+        assert issues[0]["id"] == str(stale_40.id)
+        assert issues[1]["id"] == str(stale_20.id)
+        # Shape: identifier composed from project.identifier + sequence_id.
+        assert issues[0]["identifier"].startswith("DTP-")
+        assert issues[0]["days_since"] >= 39
+        assert issues[0]["last_activity_iso"] is not None
+
+    @pytest.mark.django_db
+    def test_touchpoint_due_respects_stale_days_threshold(
+        self, session_client, workspace, project, states, create_user
+    ):
+        """An issue 10 days old should appear with stale_days=7 but not with stale_days=14."""
+        from datetime import timedelta
+        from django.utils import timezone
+
+        now = timezone.now()
+        issue = Issue.objects.create(
+            name="10-day", workspace=workspace, project=project,
+            state=states["backlog"], created_by=create_user,
+        )
+        Issue.objects.filter(pk=issue.pk).update(updated_at=now - timedelta(days=10))
+
+        # stale_days=7 → surfaces
+        project.dashboard_config = {
+            "widgets": [
+                {"id": "wt", "type": "touchpoint_due", "title": "T",
+                 "stale_days": 7, "limit": 5}
+            ],
+        }
+        project.save(update_fields=["dashboard_config"])
+
+        response = session_client.get(_dashboard_url(workspace.slug, project.id))
+        assert len(response.data["widgets"]["wt"]["data"]["issues"]) == 1
+
+        # stale_days=14 → does not surface
+        project.dashboard_config["widgets"][0]["stale_days"] = 14
+        project.save(update_fields=["dashboard_config"])
+
+        response = session_client.get(_dashboard_url(workspace.slug, project.id))
+        assert response.data["widgets"]["wt"]["data"]["issues"] == []
+
+    @pytest.mark.django_db
+    def test_touchpoint_due_empty_returns_empty_list(
+        self, session_client, workspace, project, states
+    ):
+        """No items at all → empty issues list, threshold echoed, no error."""
+        project.dashboard_config = {
+            "widgets": [
+                {"id": "wt", "type": "touchpoint_due", "title": "T",
+                 "stale_days": 14, "limit": 5}
+            ],
+        }
+        project.save(update_fields=["dashboard_config"])
+
+        response = session_client.get(_dashboard_url(workspace.slug, project.id))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.data["widgets"]["wt"]["data"]
+        assert data["issues"] == []
+        assert data["stale_threshold_days"] == 14
+
+
+@pytest.mark.contract
 class TestDashboardPermissions:
     """Permission gating on the dashboard-data endpoint."""
 
