@@ -35,12 +35,12 @@ export const useNavigationItems = ({
   const term = useProjectTerminology(projectId);
   // Base navigation items
   const baseNavigation = useCallback(
-    (workspaceSlug: string, projectId: string): TNavigationItem[] => [
+    (wsSlug: string, pId: string): TNavigationItem[] => [
       {
         i18n_key: "sidebar.work_items",
         key: "work_items",
         name: term.plural,
-        href: `/${workspaceSlug}/projects/${projectId}/issues`,
+        href: `/${wsSlug}/projects/${pId}/issues`,
         icon: WorkItemsIcon,
         access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
         shouldRender: true,
@@ -50,7 +50,7 @@ export const useNavigationItems = ({
         i18n_key: "sidebar.cycles",
         key: "cycles",
         name: "Cycles",
-        href: `/${workspaceSlug}/projects/${projectId}/cycles`,
+        href: `/${wsSlug}/projects/${pId}/cycles`,
         icon: CycleIcon,
         access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
         shouldRender: !!project?.cycle_view,
@@ -60,17 +60,18 @@ export const useNavigationItems = ({
         i18n_key: "sidebar.modules",
         key: "modules",
         name: "Modules",
-        href: `/${workspaceSlug}/projects/${projectId}/modules`,
+        href: `/${wsSlug}/projects/${pId}/modules`,
         icon: ModuleIcon,
         access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
         shouldRender: !!project?.module_view,
         sortOrder: 3,
       },
       {
+        // [ours: project dashboards] ENG-179 — Views→Dashboard rename.
         i18n_key: "sidebar.views",
         key: "views",
-        name: "Views",
-        href: `/${workspaceSlug}/projects/${projectId}/views`,
+        name: "Dashboard",
+        href: `/${wsSlug}/projects/${pId}/views`,
         icon: ViewsIcon,
         access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
         shouldRender: !!project?.issue_views_view,
@@ -80,7 +81,7 @@ export const useNavigationItems = ({
         i18n_key: "sidebar.pages",
         key: "pages",
         name: "Pages",
-        href: `/${workspaceSlug}/projects/${projectId}/pages`,
+        href: `/${wsSlug}/projects/${pId}/pages`,
         icon: PageIcon,
         access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
         shouldRender: !!project?.page_view,
@@ -90,7 +91,7 @@ export const useNavigationItems = ({
         i18n_key: "sidebar.intake",
         key: "intake",
         name: "Intake",
-        href: `/${workspaceSlug}/projects/${projectId}/intake`,
+        href: `/${wsSlug}/projects/${pId}/intake`,
         icon: IntakeIcon,
         access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
         shouldRender: !!project?.inbox_view,
@@ -111,8 +112,10 @@ export const useNavigationItems = ({
       return hasAccess;
     });
 
-    // Sort by sortOrder
-    return filteredItems.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+    // Sort by sortOrder (copy first to avoid mutating filter result).
+    // [ours] toSorted would be tidier but apps/web tsconfig targets ES2022.
+    // oxlint-disable-next-line eslint-plugin-unicorn(no-array-sort)
+    return [...filteredItems].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
   }, [workspaceSlug, projectId, baseNavigation, allowPermissions, project?.id]);
 
   return navigationItems;
