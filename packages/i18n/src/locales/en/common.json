@@ -499,6 +499,7 @@
     "properties": "Properties",
     "parent": "Parent",
     "page": "Page",
+    "linked_pages": "Linked pages",
     "remove": "Remove",
     "archiving": "Archiving",
     "archive": "Archive",
