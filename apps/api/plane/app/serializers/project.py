@@ -108,6 +108,11 @@ class ProjectLiteSerializer(BaseSerializer):
             "cover_image_url",
             "logo_props",
             "description",
+            # [ours: terminology] sidebar/nav surfaces need terminology in the
+            # partial payload so per-project labels render correctly on first
+            # load — without this, the sidebar showed "Work items" until the
+            # user clicked into the project and fetched the full detail.
+            "terminology",
         ]
         read_only_fields = fields
 

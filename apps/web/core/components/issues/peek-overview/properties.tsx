@@ -44,6 +44,7 @@ import { IssueWorklogProperty } from "@/plane-web/components/issues/worklog/prop
 import type { TIssueOperations } from "../issue-detail";
 import { IssueCycleSelect } from "../issue-detail/cycle-select";
 import { IssueLabel } from "../issue-detail/label";
+import { IssueLinkedPages } from "../issue-detail/linked-pages";
 import { IssueModuleSelect } from "../issue-detail/module-select";
 
 interface IPeekOverviewProperties {
@@ -138,7 +139,9 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
               userIds={createdByDetails?.display_name.includes("-intake") ? null : createdByDetails?.id}
             />
             <span className="grow truncate text-body-xs-medium leading-5 text-secondary">
-              {createdByDetails?.display_name.includes("-intake") ? "Promptable Operator" : createdByDetails?.display_name}
+              {createdByDetails?.display_name.includes("-intake")
+                ? "Promptable Operator"
+                : createdByDetails?.display_name}
             </span>
           </SidebarPropertyListItem>
         )}
@@ -268,6 +271,14 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
           isEditable={!disabled}
           isPeekView
         />
+
+        {/* Linked pages — pages that mention this work item via @-mention. */}
+        <div className="mt-6">
+          <h5 className="text-body-xs-medium">{t("common.linked_pages") || "Linked pages"}</h5>
+          <div className="mt-2 mb-4">
+            <IssueLinkedPages workspaceSlug={workspaceSlug} projectId={projectId} issueId={issueId} />
+          </div>
+        </div>
       </div>
     </div>
   );

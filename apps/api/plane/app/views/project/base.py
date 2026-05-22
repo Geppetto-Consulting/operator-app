@@ -189,6 +189,11 @@ class ProjectViewSet(BaseViewSet):
             "updated_at",
             "created_by",
             "updated_by",
+            # [ours: terminology] sidebar/nav surfaces need terminology in the
+            # list payload — without this, per-project labels render the
+            # operator-default ("Work items") until the user fetches the
+            # full project detail by clicking into it.
+            "terminology",
         )
 
         if WorkspaceMember.objects.filter(
