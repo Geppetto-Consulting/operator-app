@@ -4,19 +4,17 @@
  * See the LICENSE file for details.
  */
 
-import { useTheme } from "next-themes";
-// assets
-import LogoSpinnerDark from "@/app/assets/images/logo-spinner-dark.gif?url";
-import LogoSpinnerLight from "@/app/assets/images/logo-spinner-light.gif?url";
+import { PRODUCT_NAME } from "@plane/constants";
 
 export function LogoSpinner() {
-  const { resolvedTheme } = useTheme();
-
-  const logoSrc = resolvedTheme === "dark" ? LogoSpinnerDark : LogoSpinnerLight;
-
   return (
-    <div className="flex items-center justify-center">
-      <img src={logoSrc} alt="logo" className="h-6 w-auto object-contain sm:h-11" />
+    <div className="flex flex-col items-center justify-center gap-3">
+      <div
+        className="border-custom-border-200 border-t-custom-primary-100 h-8 w-8 animate-spin rounded-full border-2"
+        role="status"
+        aria-label="Loading"
+      />
+      <span className="text-xs text-custom-text-300 font-medium tracking-wide">{PRODUCT_NAME}</span>
     </div>
   );
 }
