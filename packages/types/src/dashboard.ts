@@ -185,3 +185,151 @@ export type THomeDashboardResponse = {
   dashboard: TDeprecatedDashboard;
   widgets: TWidget[];
 };
+
+// =============================================================================
+// [ours: project dashboards] Operator fork — agent-controlled project dashboards
+//
+// See ENG-177 programme tracker for the schema canonical, ENG-178 for backend
+// (Project.dashboard_config JSONField + GET /dashboard-data/), ENG-179 for the
+// frontend render (this contract), ENG-180 for MCP write paths (Phase 3 consumes
+// these types via packages/types). Project.dashboard_config is the source of
+// truth; the dashboard-data endpoint computes per-widget payloads from it.
+// =============================================================================
+
+export type TDashboardWidgetSize = "small" | "medium" | "large";
+
+export type TDashboardLayout = "grid-3" | string;
+
+export type TDashboardWidgetFilters = {
+  state_group?: string[];
+  state_group_exclude?: string[];
+  priority?: string[];
+};
+
+export type TDashboardWidgetBase = {
+  id: string;
+  title: string;
+  size?: TDashboardWidgetSize;
+};
+
+export type TCountByStateWidgetConfig = TDashboardWidgetBase & {
+  type: "count_by_state";
+  filters?: TDashboardWidgetFilters;
+};
+
+export type TCountByPriorityWidgetConfig = TDashboardWidgetBase & {
+  type: "count_by_priority";
+  filters?: TDashboardWidgetFilters;
+};
+
+export type TDueSoonWidgetConfig = TDashboardWidgetBase & {
+  type: "due_soon";
+  horizon_days?: number;
+  limit?: number;
+  filters?: TDashboardWidgetFilters;
+};
+
+export type TRecentActivityWidgetConfig = TDashboardWidgetBase & {
+  type: "recent_activity";
+  limit?: number;
+  filters?: TDashboardWidgetFilters;
+};
+
+export type TMetricFormat = "int" | "count" | "percent" | "ratio";
+
+export type TMetricWidgetConfig = TDashboardWidgetBase & {
+  type: "metric";
+  numerator: TDashboardWidgetFilters;
+  denominator?: TDashboardWidgetFilters;
+  format?: TMetricFormat;
+};
+
+export type TDashboardWidget =
+  | TCountByStateWidgetConfig
+  | TCountByPriorityWidgetConfig
+  | TDueSoonWidgetConfig
+  | TRecentActivityWidgetConfig
+  | TMetricWidgetConfig;
+
+export type TDashboardWidgetType = TDashboardWidget["type"];
+
+export type TDashboardConfig = {
+  widgets: TDashboardWidget[];
+  layout?: TDashboardLayout;
+};
+
+// --- Per-widget computed-data shapes (response from /dashboard-data/) ---
+
+export type TCountByStateDatum = {
+  state_id: string;
+  state: string;
+  color: string;
+  group: TStateGroups | null;
+  count: number;
+};
+
+export type TCountByStateWidgetData = {
+  counts: TCountByStateDatum[];
+};
+
+export type TCountByPriorityDatum = {
+  priority: TIssuePriorities;
+  count: number;
+};
+
+export type TCountByPriorityWidgetData = {
+  counts: TCountByPriorityDatum[];
+};
+
+export type TDashboardIssueRef = {
+  id: string;
+  name: string;
+  sequence_id: number;
+  state: string | null;
+  state_group: TStateGroups | null;
+  priority?: TIssuePriorities;
+};
+
+export type TDueSoonWidgetData = {
+  issues: (TDashboardIssueRef & { due_date: string | null })[];
+};
+
+export type TRecentActivityIssue = TDashboardIssueRef & {
+  updated_at: string;
+  // [ours: backend returns UUID string; renderer resolves via member store]
+  // See ENG-178 audit (recent_activity.updated_by shape decision — Phase 2).
+  updated_by: string | null;
+};
+
+export type TRecentActivityWidgetData = {
+  issues: TRecentActivityIssue[];
+};
+
+export type TMetricWidgetData = {
+  value: number;
+  numerator: number;
+  denominator?: number | null;
+  format: TMetricFormat;
+};
+
+export type TDashboardWidgetData =
+  | TCountByStateWidgetData
+  | TCountByPriorityWidgetData
+  | TDueSoonWidgetData
+  | TRecentActivityWidgetData
+  | TMetricWidgetData;
+
+// Per-widget error payload (backend may return error keys instead of `data`
+// when a widget is malformed or its compute path fails). See dashboard.py
+// L262-L294 in apps/api.
+export type TDashboardWidgetError = {
+  error: "missing_widget_type" | "unknown_widget_type" | "compute_failed" | string;
+};
+
+export type TDashboardWidgetResponseEntry =
+  | { type: TDashboardWidgetType; data: TDashboardWidgetData }
+  | (TDashboardWidgetError & { type?: string });
+
+export type TDashboardDataResponse = {
+  widgets: Record<string, TDashboardWidgetResponseEntry>;
+};

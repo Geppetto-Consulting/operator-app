@@ -52,9 +52,11 @@ export const getProjectFeatureNavigation = (
     sortOrder: 3,
   },
   {
+    // [ours: project dashboards] ENG-179 — Views→Dashboard rename. See
+    // workspace/sidebar/project-navigation.tsx for the matching change.
     i18n_key: "sidebar.views",
     key: EProjectFeatureKey.VIEWS,
-    name: "Views",
+    name: "Dashboard",
     href: `/${workspaceSlug}/projects/${projectId}/views`,
     icon: ViewsIcon,
     access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],

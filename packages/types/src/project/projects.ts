@@ -5,6 +5,7 @@
  */
 
 import type { TLogoProps } from "../common";
+import type { TDashboardConfig } from "../dashboard";
 import type { TUserPermissions } from "../enums";
 import type { TStateGroups } from "../state";
 import type { IUser, IUserLite } from "../users";
@@ -45,6 +46,11 @@ export interface IPartialProject {
   // partial project) can resolve the correct per-project label without a
   // separate full-fetch.
   terminology?: TProjectTerminology;
+  // [ours: dashboards] operator fork — agent-controlled project dashboards.
+  // See ENG-177 / ENG-178 / ENG-179. Lives on the partial so workspace-sidebar
+  // surfaces and the project-detail page can both render without a separate
+  // full-fetch. Empty/malformed → backend short-circuits to {"widgets": {}}.
+  dashboard_config?: TDashboardConfig | null;
 }
 
 // [ours: terminology] Operator fork — per-project terminology override.
