@@ -105,9 +105,9 @@ export function renderWidget(props: TWidgetRenderProps): React.ReactNode {
         <TouchpointDueWidget config={config} data={data as never} workspaceSlug={workspaceSlug} projectId={projectId} />
       );
     case "calendar_upcoming":
-      return <CalendarUpcomingWidget config={config} data={data as never} />;
+      return <CalendarUpcomingWidget config={config} data={data as never} workspaceSlug={workspaceSlug} />;
     case "email_feed":
-      return <EmailFeedWidget config={config} data={data as never} />;
+      return <EmailFeedWidget config={config} data={data as never} workspaceSlug={workspaceSlug} />;
     default:
       return <UnsupportedWidget type={(config as { type?: string }).type} />;
   }

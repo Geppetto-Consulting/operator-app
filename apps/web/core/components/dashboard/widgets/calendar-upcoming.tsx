@@ -20,6 +20,12 @@ import { WidgetShell, WidgetEmpty } from "./widget-shell";
 type Props = {
   config: TCalendarUpcomingWidgetConfig;
   data: TCalendarUpcomingWidgetData;
+  // ENG-200: workspace slug threaded through from renderWidget so the
+  // needs_setup CTA links to the actual /{workspaceSlug}/settings/integrations
+  // route (the un-namespaced /settings/integrations 404s — Plane settings
+  // are workspace-scoped). Mirrors how due_soon + touchpoint_due already
+  // receive workspaceSlug from the widget orchestrator.
+  workspaceSlug: string;
 };
 
 /**
@@ -52,7 +58,7 @@ function formatEventTime(iso: string | null): string {
   return `${d.toLocaleDateString([], { month: "short", day: "numeric" })} ${time}`;
 }
 
-export const CalendarUpcomingWidget = observer(function CalendarUpcomingWidget({ config, data }: Props) {
+export const CalendarUpcomingWidget = observer(function CalendarUpcomingWidget({ config, data, workspaceSlug }: Props) {
   const events = data.events ?? [];
 
   // needs_setup → clear CTA, not a generic empty state. The user's action
@@ -62,7 +68,10 @@ export const CalendarUpcomingWidget = observer(function CalendarUpcomingWidget({
       <WidgetShell title={config.title}>
         <div className="flex flex-1 flex-col items-center justify-center gap-2 py-6 text-center">
           <p className="text-sm text-custom-text-300">Connect Google Calendar to see upcoming events.</p>
-          <a href="/settings/integrations" className="text-custom-primary-100 text-12 hover:underline">
+          <a
+            href={`/${workspaceSlug}/settings/integrations`}
+            className="text-custom-primary-100 text-12 hover:underline"
+          >
             Set up Google Calendar
           </a>
         </div>
