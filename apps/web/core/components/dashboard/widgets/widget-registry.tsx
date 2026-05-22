@@ -13,7 +13,10 @@ import { CountByPriorityWidget } from "./count-by-priority";
 import { CountByStateWidget } from "./count-by-state";
 import { DueSoonWidget } from "./due-soon";
 import { MetricWidget } from "./metric";
+import { PipelineFunnelWidget } from "./pipeline-funnel";
 import { RecentActivityWidget } from "./recent-activity";
+import { TouchpointDueWidget } from "./touchpoint-due";
+import { VelocityWidget } from "./velocity";
 import { WidgetShell } from "./widget-shell";
 
 export type TWidgetRenderProps = {
@@ -31,7 +34,32 @@ export const SUPPORTED_WIDGET_TYPES: readonly TDashboardWidgetType[] = [
   "due_soon",
   "recent_activity",
   "metric",
+  // ENG-198 — Phase 2 module-shaped widgets.
+  "pipeline_funnel",
+  "velocity",
+  "touchpoint_due",
 ] as const;
+
+// Widget data-source map. Phase 1 (ENG-197) orchestrator uses this to decide
+// whether to fetch a widget's data from Plane's /dashboard-data/ endpoint or
+// from operator-mcp's /widget-data/ endpoint. All Phase-1+Phase-2 widgets are
+// "plane"; future calendar_upcoming / email_feed widgets will be "operator".
+//
+// Kept as a const map so Phase 3 / Phase 4 can introspect it without
+// importing every widget component.
+export type TWidgetDataSource = "plane" | "operator";
+
+export const WIDGET_DATA_SOURCE: Record<TDashboardWidgetType, TWidgetDataSource> = {
+  count_by_state: "plane",
+  count_by_priority: "plane",
+  due_soon: "plane",
+  recent_activity: "plane",
+  metric: "plane",
+  // ENG-198 widgets are all Plane-data-sourced.
+  pipeline_funnel: "plane",
+  velocity: "plane",
+  touchpoint_due: "plane",
+};
 
 export function renderWidget(props: TWidgetRenderProps): React.ReactNode {
   const { config, data, workspaceSlug, projectId } = props;
@@ -53,6 +81,14 @@ export function renderWidget(props: TWidgetRenderProps): React.ReactNode {
       );
     case "metric":
       return <MetricWidget config={config} data={data as never} />;
+    case "pipeline_funnel":
+      return <PipelineFunnelWidget config={config} data={data as never} />;
+    case "velocity":
+      return <VelocityWidget config={config} data={data as never} />;
+    case "touchpoint_due":
+      return (
+        <TouchpointDueWidget config={config} data={data as never} workspaceSlug={workspaceSlug} projectId={projectId} />
+      );
     default:
       return <UnsupportedWidget type={(config as { type?: string }).type} />;
   }

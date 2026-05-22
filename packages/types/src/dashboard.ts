@@ -244,12 +244,44 @@ export type TMetricWidgetConfig = TDashboardWidgetBase & {
   format?: TMetricFormat;
 };
 
+// =============================================================================
+// [ours: ENG-198] Phase 2 module-shaped widgets
+// pipeline_funnel / velocity / touchpoint_due — module-specific shapes on top
+// of the Phase 1 generic five. Same dispatch contract; new compute paths in
+// apps/api/plane/app/views/project/dashboard.py.
+// =============================================================================
+
+export type TPipelineFunnelWidgetConfig = TDashboardWidgetBase & {
+  type: "pipeline_funnel";
+  filters?: TDashboardWidgetFilters;
+};
+
+export type TVelocityWidgetConfig = TDashboardWidgetBase & {
+  type: "velocity";
+  // Number of trailing ISO weeks to include. Default 8, clamped server-side
+  // to [1, 52].
+  weeks?: number;
+  filters?: TDashboardWidgetFilters;
+};
+
+export type TTouchpointDueWidgetConfig = TDashboardWidgetBase & {
+  type: "touchpoint_due";
+  // Issues with no activity in N+ days surface. Default 14.
+  stale_days?: number;
+  // Top-N (oldest-first). Default 5, clamped server-side to [0, 100].
+  limit?: number;
+  filters?: TDashboardWidgetFilters;
+};
+
 export type TDashboardWidget =
   | TCountByStateWidgetConfig
   | TCountByPriorityWidgetConfig
   | TDueSoonWidgetConfig
   | TRecentActivityWidgetConfig
-  | TMetricWidgetConfig;
+  | TMetricWidgetConfig
+  | TPipelineFunnelWidgetConfig
+  | TVelocityWidgetConfig
+  | TTouchpointDueWidgetConfig;
 
 export type TDashboardWidgetType = TDashboardWidget["type"];
 
@@ -312,12 +344,60 @@ export type TMetricWidgetData = {
   format: TMetricFormat;
 };
 
+// --- ENG-198 Phase 2 widget data shapes ---
+
+export type TPipelineFunnelStage = {
+  state_id: string;
+  name: string;
+  color: string;
+  count: number;
+};
+
+export type TPipelineFunnelWidgetData = {
+  stages: TPipelineFunnelStage[];
+  // Excludes cancelled-state issues — don't inflate the total with rejected work.
+  total: number;
+  // Won / non-cancelled. Null when total = 0 (frontend renders "—").
+  conversion_pct: number | null;
+};
+
+export type TVelocityBucket = {
+  week_start: string; // ISO date, Monday-anchored
+  closed: number;
+};
+
+export type TVelocityWidgetData = {
+  weeks: TVelocityBucket[];
+  total: number;
+  // (avg of last N/2 weeks − avg of first N/2 weeks) / first_half_avg.
+  // Null when first half avg = 0 (avoid divide-by-zero misleading numbers).
+  trend_pct: number | null;
+};
+
+export type TTouchpointDueIssue = {
+  id: string;
+  identifier: string; // e.g. "REL-3" — project_identifier + sequence_id
+  name: string;
+  last_activity_iso: string | null;
+  days_since: number | null;
+};
+
+export type TTouchpointDueWidgetData = {
+  issues: TTouchpointDueIssue[];
+  // Echo of the threshold used so the frontend can render
+  // "no items quiet for N+ days" without re-reading the config.
+  stale_threshold_days: number;
+};
+
 export type TDashboardWidgetData =
   | TCountByStateWidgetData
   | TCountByPriorityWidgetData
   | TDueSoonWidgetData
   | TRecentActivityWidgetData
-  | TMetricWidgetData;
+  | TMetricWidgetData
+  | TPipelineFunnelWidgetData
+  | TVelocityWidgetData
+  | TTouchpointDueWidgetData;
 
 // Per-widget error payload (backend may return error keys instead of `data`
 // when a widget is malformed or its compute path fails). See dashboard.py
