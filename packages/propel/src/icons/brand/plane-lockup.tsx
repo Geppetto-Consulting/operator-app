@@ -25,10 +25,10 @@ export function BrandLockup({ width = "253", height = "53", className, color = "
     >
       <text
         x="0"
-        y="36"
+        y="34"
         fill={color}
         fontFamily="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-        fontSize="28"
+        fontSize="20"
         fontWeight="600"
         letterSpacing="-0.02em"
       >
