@@ -115,6 +115,15 @@ class Project(BaseModel):
     # means "use operator defaults" — the frontend useTerminology() hook falls
     # back to OPERATOR_DEFAULT_TERMINOLOGY when keys are missing.
     terminology = models.JSONField(default=dict, blank=True)
+    # [ours: dashboards] Per-project agent-controlled dashboard configuration
+    # (operator fork — ENG-178, Phase 1 of the Dashboards programme).
+    # Shape: { "widgets": [ { "id": str, "type": str, "title": str, ...type-specific }, ... ], "layout": str }.
+    # Empty dict / missing keys mean "no dashboard configured"; the
+    # dashboard-data endpoint returns { "widgets": {} } and the frontend
+    # renders an empty-state. The agent is the only mutator — humans never
+    # write to this column via UI. See ENG-177 programme doc for the full
+    # widget-type registry and response contract.
+    dashboard_config = models.JSONField(default=dict, blank=True)
     default_state = models.ForeignKey("db.State", on_delete=models.SET_NULL, null=True, related_name="default_state")
     archived_at = models.DateTimeField(null=True)
     # timezone

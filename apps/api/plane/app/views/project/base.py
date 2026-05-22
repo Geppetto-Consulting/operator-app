@@ -194,6 +194,14 @@ class ProjectViewSet(BaseViewSet):
             # operator-default ("Work items") until the user fetches the
             # full project detail by clicking into it.
             "terminology",
+            # [ours: dashboards] ENG-178 — the project list payload feeds
+            # the sidebar / launcher which decides whether a project has a
+            # dashboard configured. Add to the `.values()` projection so
+            # the cursor-paginated branch (line 130) and the non-paginated
+            # branch (line 137) both surface it; otherwise the Dashboard
+            # button shows "no dashboard" until the user clicks into the
+            # project and fetches the full detail.
+            "dashboard_config",
         )
 
         if WorkspaceMember.objects.filter(

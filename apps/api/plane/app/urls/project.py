@@ -18,6 +18,8 @@ from plane.app.views import (
     UserProjectRolesEndpoint,
     ProjectArchiveUnarchiveEndpoint,
     ProjectMemberPreferenceEndpoint,
+    # [ours: dashboards] ENG-178
+    DashboardDataEndpoint,
 )
 
 
@@ -128,5 +130,12 @@ urlpatterns = [
         "workspaces/<str:slug>/projects/<uuid:project_id>/preferences/member/<uuid:member_id>/",
         ProjectMemberPreferenceEndpoint.as_view(),
         name="project-member-preference",
+    ),
+    # [ours: dashboards] ENG-178 — per-project agent-configured dashboard.
+    # GET returns computed widget data based on project.dashboard_config.
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/dashboard-data/",
+        DashboardDataEndpoint.as_view(),
+        name="project-dashboard-data",
     ),
 ]
