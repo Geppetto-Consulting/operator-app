@@ -245,10 +245,8 @@ export type TMetricWidgetConfig = TDashboardWidgetBase & {
 };
 
 // =============================================================================
-// [ours: ENG-198] Phase 2 module-shaped widgets
-// pipeline_funnel / velocity / touchpoint_due — module-specific shapes on top
-// of the Phase 1 generic five. Same dispatch contract; new compute paths in
-// apps/api/plane/app/views/project/dashboard.py.
+// [ours: ENG-198] Phase 2 module-shaped widgets (Plane-data source)
+// pipeline_funnel / velocity / touchpoint_due
 // =============================================================================
 
 export type TPipelineFunnelWidgetConfig = TDashboardWidgetBase & {
@@ -258,8 +256,7 @@ export type TPipelineFunnelWidgetConfig = TDashboardWidgetBase & {
 
 export type TVelocityWidgetConfig = TDashboardWidgetBase & {
   type: "velocity";
-  // Number of trailing ISO weeks to include. Default 8, clamped server-side
-  // to [1, 52].
+  // Number of trailing ISO weeks to include. Default 8, clamped server-side to [1, 52].
   weeks?: number;
   filters?: TDashboardWidgetFilters;
 };
@@ -273,6 +270,24 @@ export type TTouchpointDueWidgetConfig = TDashboardWidgetBase & {
   filters?: TDashboardWidgetFilters;
 };
 
+// =============================================================================
+// [ours: ENG-197] Phase 1 connector-data widget configs (operator-mcp source)
+// Source: operator-mcp /api/widget-data/<type>/ — NOT the Plane /dashboard-data/
+// endpoint. The orchestrator (Dashboard root) routes by widget type via
+// WIDGET_DATA_SOURCE.
+// =============================================================================
+
+export type TCalendarUpcomingWidgetConfig = TDashboardWidgetBase & {
+  type: "calendar_upcoming";
+  limit?: number;
+  horizon_days?: number;
+};
+
+export type TEmailFeedWidgetConfig = TDashboardWidgetBase & {
+  type: "email_feed";
+  limit?: number;
+};
+
 export type TDashboardWidget =
   | TCountByStateWidgetConfig
   | TCountByPriorityWidgetConfig
@@ -281,7 +296,9 @@ export type TDashboardWidget =
   | TMetricWidgetConfig
   | TPipelineFunnelWidgetConfig
   | TVelocityWidgetConfig
-  | TTouchpointDueWidgetConfig;
+  | TTouchpointDueWidgetConfig
+  | TCalendarUpcomingWidgetConfig
+  | TEmailFeedWidgetConfig;
 
 export type TDashboardWidgetType = TDashboardWidget["type"];
 
@@ -344,7 +361,7 @@ export type TMetricWidgetData = {
   format: TMetricFormat;
 };
 
-// --- ENG-198 Phase 2 widget data shapes ---
+// --- ENG-198 Phase 2 widget data shapes (Plane source) ---
 
 export type TPipelineFunnelStage = {
   state_id: string;
@@ -370,7 +387,7 @@ export type TVelocityWidgetData = {
   weeks: TVelocityBucket[];
   total: number;
   // (avg of last N/2 weeks − avg of first N/2 weeks) / first_half_avg.
-  // Null when first half avg = 0 (avoid divide-by-zero misleading numbers).
+  // Null when first half avg = 0.
   trend_pct: number | null;
 };
 
@@ -384,9 +401,41 @@ export type TTouchpointDueIssue = {
 
 export type TTouchpointDueWidgetData = {
   issues: TTouchpointDueIssue[];
-  // Echo of the threshold used so the frontend can render
-  // "no items quiet for N+ days" without re-reading the config.
   stale_threshold_days: number;
+};
+
+// --- ENG-197 Phase 1 widget data shapes (operator-mcp source) ---
+// needs_setup fires when the workspace hasn't OAuth'd the connector;
+// the renderer shows a CTA tile instead of an empty state.
+
+export type TCalendarUpcomingEvent = {
+  id: string;
+  summary: string;
+  start_iso: string | null;
+  end_iso: string | null;
+  location: string | null;
+  html_link: string | null;
+};
+
+export type TCalendarUpcomingWidgetData = {
+  events: TCalendarUpcomingEvent[];
+  needs_setup?: boolean;
+  connector?: string;
+};
+
+export type TEmailFeedMessage = {
+  id: string;
+  subject: string;
+  from: string;
+  received_iso: string | null;
+  snippet: string;
+  thread_url: string;
+};
+
+export type TEmailFeedWidgetData = {
+  messages: TEmailFeedMessage[];
+  needs_setup?: boolean;
+  connector?: string;
 };
 
 export type TDashboardWidgetData =
@@ -397,7 +446,9 @@ export type TDashboardWidgetData =
   | TMetricWidgetData
   | TPipelineFunnelWidgetData
   | TVelocityWidgetData
-  | TTouchpointDueWidgetData;
+  | TTouchpointDueWidgetData
+  | TCalendarUpcomingWidgetData
+  | TEmailFeedWidgetData;
 
 // Per-widget error payload (backend may return error keys instead of `data`
 // when a widget is malformed or its compute path fails). See dashboard.py

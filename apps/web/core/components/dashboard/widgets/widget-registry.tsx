@@ -4,14 +4,16 @@
  * See the LICENSE file for details.
  */
 
-// [ours: project dashboards] Widget registry — see ENG-179 brief §4.2.
-// Maps widget.type → renderer. New widget types layer in here without changing
-// the Dashboard shell. Unknown types fall back to a degraded tile (no crash).
+// [ours: project dashboards] Widget registry — see ENG-179 brief §4.2 +
+// ENG-197 (orchestrator pattern). Maps widget.type → renderer and widget.type
+// → data source. Unknown types fall back to a degraded tile (no crash).
 
 import type { TDashboardWidget, TDashboardWidgetData, TDashboardWidgetType } from "@plane/types";
+import { CalendarUpcomingWidget } from "./calendar-upcoming";
 import { CountByPriorityWidget } from "./count-by-priority";
 import { CountByStateWidget } from "./count-by-state";
 import { DueSoonWidget } from "./due-soon";
+import { EmailFeedWidget } from "./email-feed";
 import { MetricWidget } from "./metric";
 import { PipelineFunnelWidget } from "./pipeline-funnel";
 import { RecentActivityWidget } from "./recent-activity";
@@ -34,20 +36,26 @@ export const SUPPORTED_WIDGET_TYPES: readonly TDashboardWidgetType[] = [
   "due_soon",
   "recent_activity",
   "metric",
-  // ENG-198 — Phase 2 module-shaped widgets.
+  // ENG-198 — Phase 2 module-shaped widgets (plane source).
   "pipeline_funnel",
   "velocity",
   "touchpoint_due",
+  // ENG-197 — Phase 1 connector widgets (operator-mcp source).
+  "calendar_upcoming",
+  "email_feed",
 ] as const;
 
-// Widget data-source map. Phase 1 (ENG-197) orchestrator uses this to decide
-// whether to fetch a widget's data from Plane's /dashboard-data/ endpoint or
-// from operator-mcp's /widget-data/ endpoint. All Phase-1+Phase-2 widgets are
-// "plane"; future calendar_upcoming / email_feed widgets will be "operator".
-//
-// Kept as a const map so Phase 3 / Phase 4 can introspect it without
-// importing every widget component.
-export type TWidgetDataSource = "plane" | "operator";
+/**
+ * Widget data source registry. The Dashboard root partitions widgets by
+ * source: "plane" → fetch from Plane /dashboard-data/, "operator-mcp" →
+ * fetch from operator-mcp /api/widget-data/. Unknown widget types default
+ * to "plane" (fail-safe — Plane will return an unknown_widget_type error
+ * that renders via WidgetErrorTile).
+ *
+ * Adding a new widget: register here AND in widget-data.ts on the server
+ * (matching SUPPORTED_WIDGET_TYPES). Both sides must stay in sync.
+ */
+export type TWidgetDataSource = "plane" | "operator-mcp";
 
 export const WIDGET_DATA_SOURCE: Record<TDashboardWidgetType, TWidgetDataSource> = {
   count_by_state: "plane",
@@ -55,11 +63,18 @@ export const WIDGET_DATA_SOURCE: Record<TDashboardWidgetType, TWidgetDataSource>
   due_soon: "plane",
   recent_activity: "plane",
   metric: "plane",
-  // ENG-198 widgets are all Plane-data-sourced.
+  // ENG-198 — Phase 2 Plane-data widgets.
   pipeline_funnel: "plane",
   velocity: "plane",
   touchpoint_due: "plane",
+  // ENG-197 — Phase 1 operator-mcp connector widgets.
+  calendar_upcoming: "operator-mcp",
+  email_feed: "operator-mcp",
 };
+
+export function getWidgetDataSource(type: string): TWidgetDataSource {
+  return WIDGET_DATA_SOURCE[type as TDashboardWidgetType] ?? "plane";
+}
 
 export function renderWidget(props: TWidgetRenderProps): React.ReactNode {
   const { config, data, workspaceSlug, projectId } = props;
@@ -89,6 +104,10 @@ export function renderWidget(props: TWidgetRenderProps): React.ReactNode {
       return (
         <TouchpointDueWidget config={config} data={data as never} workspaceSlug={workspaceSlug} projectId={projectId} />
       );
+    case "calendar_upcoming":
+      return <CalendarUpcomingWidget config={config} data={data as never} />;
+    case "email_feed":
+      return <EmailFeedWidget config={config} data={data as never} />;
     default:
       return <UnsupportedWidget type={(config as { type?: string }).type} />;
   }
