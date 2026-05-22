@@ -244,12 +244,30 @@ export type TMetricWidgetConfig = TDashboardWidgetBase & {
   format?: TMetricFormat;
 };
 
+// [ours: module-shaped dashboards / ENG-196] Connector-data widget configs.
+// Source: operator-mcp /api/widget-data/<type>/ — NOT the Plane /dashboard-data/
+// endpoint. The orchestrator (Dashboard root) routes by widget type via
+// WIDGET_DATA_SOURCE. See ENG-197.
+
+export type TCalendarUpcomingWidgetConfig = TDashboardWidgetBase & {
+  type: "calendar_upcoming";
+  limit?: number;
+  horizon_days?: number;
+};
+
+export type TEmailFeedWidgetConfig = TDashboardWidgetBase & {
+  type: "email_feed";
+  limit?: number;
+};
+
 export type TDashboardWidget =
   | TCountByStateWidgetConfig
   | TCountByPriorityWidgetConfig
   | TDueSoonWidgetConfig
   | TRecentActivityWidgetConfig
-  | TMetricWidgetConfig;
+  | TMetricWidgetConfig
+  | TCalendarUpcomingWidgetConfig
+  | TEmailFeedWidgetConfig;
 
 export type TDashboardWidgetType = TDashboardWidget["type"];
 
@@ -312,12 +330,49 @@ export type TMetricWidgetData = {
   format: TMetricFormat;
 };
 
+// [ours: module-shaped dashboards / ENG-196] Connector-data widget data shapes.
+// These come from operator-mcp `/api/widget-data/<type>/` (NOT Plane). The
+// needs_setup flag fires when the workspace hasn't OAuth'd the connector;
+// the renderer shows a CTA tile.
+
+export type TCalendarUpcomingEvent = {
+  id: string;
+  summary: string;
+  start_iso: string | null;
+  end_iso: string | null;
+  location: string | null;
+  html_link: string | null;
+};
+
+export type TCalendarUpcomingWidgetData = {
+  events: TCalendarUpcomingEvent[];
+  needs_setup?: boolean;
+  connector?: string;
+};
+
+export type TEmailFeedMessage = {
+  id: string;
+  subject: string;
+  from: string;
+  received_iso: string | null;
+  snippet: string;
+  thread_url: string;
+};
+
+export type TEmailFeedWidgetData = {
+  messages: TEmailFeedMessage[];
+  needs_setup?: boolean;
+  connector?: string;
+};
+
 export type TDashboardWidgetData =
   | TCountByStateWidgetData
   | TCountByPriorityWidgetData
   | TDueSoonWidgetData
   | TRecentActivityWidgetData
-  | TMetricWidgetData;
+  | TMetricWidgetData
+  | TCalendarUpcomingWidgetData
+  | TEmailFeedWidgetData;
 
 // Per-widget error payload (backend may return error keys instead of `data`
 // when a widget is malformed or its compute path fails). See dashboard.py

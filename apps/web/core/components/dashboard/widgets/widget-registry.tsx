@@ -4,14 +4,16 @@
  * See the LICENSE file for details.
  */
 
-// [ours: project dashboards] Widget registry — see ENG-179 brief §4.2.
-// Maps widget.type → renderer. New widget types layer in here without changing
-// the Dashboard shell. Unknown types fall back to a degraded tile (no crash).
+// [ours: project dashboards] Widget registry — see ENG-179 brief §4.2 +
+// ENG-197 (orchestrator pattern). Maps widget.type → renderer and widget.type
+// → data source. Unknown types fall back to a degraded tile (no crash).
 
 import type { TDashboardWidget, TDashboardWidgetData, TDashboardWidgetType } from "@plane/types";
+import { CalendarUpcomingWidget } from "./calendar-upcoming";
 import { CountByPriorityWidget } from "./count-by-priority";
 import { CountByStateWidget } from "./count-by-state";
 import { DueSoonWidget } from "./due-soon";
+import { EmailFeedWidget } from "./email-feed";
 import { MetricWidget } from "./metric";
 import { RecentActivityWidget } from "./recent-activity";
 import { WidgetShell } from "./widget-shell";
@@ -31,7 +33,36 @@ export const SUPPORTED_WIDGET_TYPES: readonly TDashboardWidgetType[] = [
   "due_soon",
   "recent_activity",
   "metric",
+  "calendar_upcoming",
+  "email_feed",
 ] as const;
+
+/**
+ * ENG-197 — widget data source registry. The Dashboard root partitions
+ * widgets by source: "plane" → fetch from /dashboard-data/, "operator-mcp"
+ * → fetch from operator-mcp /api/widget-data/. Unknown widget types default
+ * to "plane" (fail-safe — Plane will return an unknown_widget_type error
+ * that renders via WidgetErrorTile).
+ *
+ * Adding a new widget: register here AND in widget-data.ts on the server
+ * (matching SUPPORTED_WIDGET_TYPES). Both sides must stay in sync — otherwise
+ * the orchestrator will fetch from the wrong source and 404.
+ */
+export type TWidgetDataSource = "plane" | "operator-mcp";
+
+export const WIDGET_DATA_SOURCE: Record<TDashboardWidgetType, TWidgetDataSource> = {
+  count_by_state: "plane",
+  count_by_priority: "plane",
+  due_soon: "plane",
+  recent_activity: "plane",
+  metric: "plane",
+  calendar_upcoming: "operator-mcp",
+  email_feed: "operator-mcp",
+};
+
+export function getWidgetDataSource(type: string): TWidgetDataSource {
+  return WIDGET_DATA_SOURCE[type as TDashboardWidgetType] ?? "plane";
+}
 
 export function renderWidget(props: TWidgetRenderProps): React.ReactNode {
   const { config, data, workspaceSlug, projectId } = props;
@@ -53,6 +84,10 @@ export function renderWidget(props: TWidgetRenderProps): React.ReactNode {
       );
     case "metric":
       return <MetricWidget config={config} data={data as never} />;
+    case "calendar_upcoming":
+      return <CalendarUpcomingWidget config={config} data={data as never} />;
+    case "email_feed":
+      return <EmailFeedWidget config={config} data={data as never} />;
     default:
       return <UnsupportedWidget type={(config as { type?: string }).type} />;
   }
