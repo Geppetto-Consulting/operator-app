@@ -9,6 +9,8 @@ from plane.api.views import (
     ProjectDetailAPIEndpoint,
     ProjectArchiveUnarchiveAPIEndpoint,
     ProjectSummaryAPIEndpoint,
+    ProjectSortOrderAPIEndpoint,
+    WorkspaceQuickLinkAPIEndpoint,
 )
 
 urlpatterns = [
@@ -31,5 +33,21 @@ urlpatterns = [
         "workspaces/<str:slug>/projects/<uuid:project_id>/summary/",
         ProjectSummaryAPIEndpoint.as_view(http_method_names=["get"]),
         name="project-summary",
+    ),
+    # ours: api — operator demo-deploy automation
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/sort-order/",
+        ProjectSortOrderAPIEndpoint.as_view(http_method_names=["post"]),
+        name="project-sort-order",
+    ),
+    path(
+        "workspaces/<str:slug>/quick-links/",
+        WorkspaceQuickLinkAPIEndpoint.as_view(http_method_names=["get", "post"]),
+        name="workspace-quick-links",
+    ),
+    path(
+        "workspaces/<str:slug>/quick-links/<uuid:pk>/",
+        WorkspaceQuickLinkAPIEndpoint.as_view(http_method_names=["patch", "delete"]),
+        name="workspace-quick-link-detail",
     ),
 ]

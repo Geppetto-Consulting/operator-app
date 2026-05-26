@@ -36,6 +36,7 @@ from plane.db.models import (
     StateGroup,
     IntakeIssue,
     ProjectPage,
+    WorkspaceUserLink,
 )
 from plane.bgtasks.webhook_task import model_activity, webhook_activity
 from plane.utils.exception_logger import log_exception
@@ -599,6 +600,77 @@ class ProjectArchiveUnarchiveAPIEndpoint(BaseAPIView):
         project = Project.objects.get(pk=project_id, workspace__slug=slug)
         project.archived_at = None
         project.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# ours: api — operator demo-deploy automation needs PAT-accessible endpoints to
+# (a) reorder the sidebar (per-user ProjectMember.sort_order) and (b) pin a
+# landing page on the workspace Home (WorkspaceUserLink). The app-side endpoints
+# require session auth which isn't usable from headless deploy scripts.
+class ProjectSortOrderAPIEndpoint(BaseAPIView):
+    """Set the per-user sidebar sort_order for a project (the API key owner's order)."""
+
+    permission_classes = [ProjectBasePermission]
+
+    def post(self, request, slug, project_id):
+        try:
+            project_member = ProjectMember.objects.get(
+                project_id=project_id,
+                workspace__slug=slug,
+                member=request.user,
+                is_active=True,
+            )
+        except ProjectMember.DoesNotExist:
+            return Response({"error": "User is not a member of this project"}, status=status.HTTP_404_NOT_FOUND)
+        sort_order = request.data.get("sort_order")
+        if sort_order is None:
+            return Response({"error": "sort_order is required"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            project_member.sort_order = float(sort_order)
+        except (TypeError, ValueError):
+            return Response({"error": "sort_order must be a number"}, status=status.HTTP_400_BAD_REQUEST)
+        project_member.save(update_fields=["sort_order"])
+        return Response({"project_id": str(project_id), "sort_order": project_member.sort_order}, status=status.HTTP_200_OK)
+
+
+class WorkspaceQuickLinkAPIEndpoint(BaseAPIView):
+    """CRUD for the API key owner's workspace Home Quick Links."""
+
+    def get(self, request, slug):
+        workspace = Workspace.objects.get(slug=slug)
+        links = WorkspaceUserLink.objects.filter(workspace=workspace, owner=request.user).order_by("created_at")
+        return Response(
+            {"results": [{"id": str(l.id), "title": l.title, "url": l.url, "created_at": l.created_at} for l in links]},
+            status=status.HTTP_200_OK,
+        )
+
+    def post(self, request, slug):
+        workspace = Workspace.objects.get(slug=slug)
+        title = request.data.get("title")
+        url = request.data.get("url")
+        if not title or not url:
+            return Response({"error": "title + url required"}, status=status.HTTP_400_BAD_REQUEST)
+        link = WorkspaceUserLink.objects.create(workspace=workspace, owner=request.user, title=title, url=url)
+        return Response({"id": str(link.id), "title": link.title, "url": link.url}, status=status.HTTP_201_CREATED)
+
+    def patch(self, request, slug, pk):
+        try:
+            link = WorkspaceUserLink.objects.get(pk=pk, workspace__slug=slug, owner=request.user)
+        except WorkspaceUserLink.DoesNotExist:
+            return Response({"error": "quick-link not found"}, status=status.HTTP_404_NOT_FOUND)
+        if "title" in request.data:
+            link.title = request.data["title"]
+        if "url" in request.data:
+            link.url = request.data["url"]
+        link.save()
+        return Response({"id": str(link.id), "title": link.title, "url": link.url}, status=status.HTTP_200_OK)
+
+    def delete(self, request, slug, pk):
+        try:
+            link = WorkspaceUserLink.objects.get(pk=pk, workspace__slug=slug, owner=request.user)
+        except WorkspaceUserLink.DoesNotExist:
+            return Response({"error": "quick-link not found"}, status=status.HTTP_404_NOT_FOUND)
+        link.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

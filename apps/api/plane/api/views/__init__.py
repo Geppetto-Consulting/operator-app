@@ -7,6 +7,8 @@ from .project import (
     ProjectDetailAPIEndpoint,
     ProjectArchiveUnarchiveAPIEndpoint,
     ProjectSummaryAPIEndpoint,
+    ProjectSortOrderAPIEndpoint,
+    WorkspaceQuickLinkAPIEndpoint,
 )
 
 from .state import (
