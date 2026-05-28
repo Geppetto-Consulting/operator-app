@@ -65,7 +65,7 @@ class Command(BaseCommand):
                 raise CommandError("Machine signature is required")
 
             instance = Instance.objects.create(
-                instance_name="Promptable Operator Community Edition",
+                instance_name="Operator Community Edition",
                 instance_id=secrets.token_hex(12),
                 current_version=current_version,
                 latest_version=latest_version,

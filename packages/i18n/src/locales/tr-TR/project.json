@@ -195,8 +195,8 @@
         "primary_button": {
           "text": "İlk iş öğenizi oluşturun",
           "comic": {
-            "title": "İş öğeleri Promptable Operator'de yapı taşlarıdır.",
-            "description": "Promptable Operator UI'yi yeniden tasarlamak, şirketi yeniden markalaştırmak veya yeni yakıt enjeksiyon sistemini başlatmak, muhtemelen alt iş öğeleri olan iş öğesi örnekleridir."
+            "title": "İş öğeleri Operator'de yapı taşlarıdır.",
+            "description": "Operator UI'yi yeniden tasarlamak, şirketi yeniden markalaştırmak veya yeni yakıt enjeksiyon sistemini başlatmak, muhtemelen alt iş öğeleri olan iş öğesi örnekleridir."
           }
         }
       },
@@ -271,8 +271,8 @@
   "project_page": {
     "empty_state": {
       "general": {
-        "title": "Bir not, belge veya tam bir bilgi bankası yazın. Promptable Operator'in AI asistanı Galileo'nun başlamanıza yardımcı olmasını sağlayın",
-        "description": "Sayfalar Promptable Operator'de düşüncelerinizi döktüğünüz alanlardır. Toplantı notları alın, kolayca biçimlendirin, iş öğelerini yerleştirin, bir bileşen kitaplığı kullanarak düzenleyin ve hepsini proje bağlamınızda tutun. Herhangi bir belgeyi hızlıca tamamlamak için bir kısayol veya düğme ile Promptable Operator'in AI'sı Galileo'yu çağırın.",
+        "title": "Bir not, belge veya tam bir bilgi bankası yazın. Operator'in AI asistanı Galileo'nun başlamanıza yardımcı olmasını sağlayın",
+        "description": "Sayfalar Operator'de düşüncelerinizi döktüğünüz alanlardır. Toplantı notları alın, kolayca biçimlendirin, iş öğelerini yerleştirin, bir bileşen kitaplığı kullanarak düzenleyin ve hepsini proje bağlamınızda tutun. Herhangi bir belgeyi hızlıca tamamlamak için bir kısayol veya düğme ile Operator'in AI'sı Galileo'yu çağırın.",
         "primary_button": {
           "text": "İlk sayfanızı oluşturun"
         }

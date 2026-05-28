@@ -67,7 +67,7 @@ export const BasePaidPlanCard = observer(function BasePaidPlanCard(props: TBaseP
           {prices.map((price: TSubscriptionPrice) => (
             <Tab.Panel key={price.key}>
               <div className="pt-6 text-center">
-                <div className="text-h4-medium">Promptable Operator {planeName}</div>
+                <div className="text-h4-medium">Operator {planeName}</div>
                 {renderActionButton(price)}
               </div>
               <div className="px-2 pt-6 pb-2">

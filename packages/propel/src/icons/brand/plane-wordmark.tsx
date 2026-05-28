@@ -8,9 +8,9 @@ import * as React from "react";
 
 import type { ISvgIcons } from "../type";
 
-// [ours: brand] interim text-based wordmark — original Plane-letter paths replaced
-// pending designer art (ENG-145). Renders "Promptable Operator" in the SVG via
-// system font so we don't ship Plane branding on the wordmark surface.
+// [ours: brand] text-based wordmark — original Plane-letter paths replaced
+// (ENG-145, refreshed ENG-248). Renders "Operator" in the SVG via system font
+// so we don't ship Plane branding on the wordmark surface.
 export function PlaneWordmark({ width = "200", height = "24", className, color = "currentColor" }: ISvgIcons) {
   return (
     <svg
@@ -30,7 +30,7 @@ export function PlaneWordmark({ width = "200", height = "24", className, color =
         fontWeight="600"
         letterSpacing="-0.01em"
       >
-        Promptable Operator
+        Operator
       </text>
     </svg>
   );

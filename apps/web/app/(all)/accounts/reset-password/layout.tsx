@@ -11,4 +11,4 @@ export default function ResetPasswordLayout() {
   return <Outlet />;
 }
 
-export const meta: Route.MetaFunction = () => [{ title: "Reset Password - Promptable Operator" }];
+export const meta: Route.MetaFunction = () => [{ title: "Reset Password - Operator" }];

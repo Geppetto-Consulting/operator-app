@@ -195,8 +195,8 @@
         "primary_button": {
           "text": "Create your first work item",
           "comic": {
-            "title": "Work items are building blocks in Promptable Operator.",
-            "description": "Redesign the Promptable Operator UI, Rebrand the company, or Launch the new fuel injection system are examples of work items that likely have sub-work items."
+            "title": "Work items are building blocks in Operator.",
+            "description": "Redesign the Operator UI, Rebrand the company, or Launch the new fuel injection system are examples of work items that likely have sub-work items."
           }
         }
       },
@@ -271,8 +271,8 @@
   "project_page": {
     "empty_state": {
       "general": {
-        "title": "Write a note, a doc, or a full knowledge base. Get Galileo, Promptable Operator's AI assistant, to help you get started",
-        "description": "Pages are thoughts potting space in Promptable Operator. Take down meeting notes, format them easily, embed work items, lay them out using a library of components, and keep them all in your project's context. To make short work of any doc, invoke Galileo, Promptable Operator's AI, with a shortcut or the click of a button.",
+        "title": "Write a note, a doc, or a full knowledge base. Get Galileo, Operator's AI assistant, to help you get started",
+        "description": "Pages are thoughts potting space in Operator. Take down meeting notes, format them easily, embed work items, lay them out using a library of components, and keep them all in your project's context. To make short work of any doc, invoke Galileo, Operator's AI, with a shortcut or the click of a button.",
         "primary_button": {
           "text": "Create your first page"
         }

@@ -18,7 +18,7 @@ type TGlobalModalsProps = {
 };
 
 /**
- * GlobalModals component manages all workspace-level modals across Promptable Operator applications.
+ * GlobalModals component manages all workspace-level modals across Operator applications.
  *
  * This includes:
  * - Profile settings modal

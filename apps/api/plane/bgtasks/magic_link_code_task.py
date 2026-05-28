@@ -33,7 +33,7 @@ def magic_link(email, key, token):
         ) = get_email_configuration()
 
         # Send the mail
-        subject = f"Your unique Promptable Operator login code is {token}"
+        subject = f"Your unique Operator login code is {token}"
         context = {"code": token, "email": email}
 
         html_content = render_email_template("emails/auth/magic_signin.html", context)

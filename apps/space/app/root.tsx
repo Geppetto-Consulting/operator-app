@@ -24,8 +24,8 @@ import interVariableWoff2 from "@fontsource-variable/inter/files/inter-latin-wgh
 import "@fontsource/material-symbols-rounded";
 import "@fontsource/ibm-plex-mono";
 
-const APP_TITLE = "Promptable Operator Publish | Make your boards public with one-click";
-const APP_DESCRIPTION = "Promptable Operator Publish is a customer feedback management surface built on the Promptable Operator stack.";
+const APP_TITLE = "Operator Publish | Make your boards public with one-click";
+const APP_DESCRIPTION = "Operator Publish is a customer feedback management surface built on the Operator stack.";
 
 export const links: Route.LinksFunction = () => [
   { rel: "apple-touch-icon", sizes: "180x180", href: appleTouchIcon },
@@ -57,6 +57,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="robots" content="noindex, nofollow" />
+        <meta name="theme-color" content="#1A101D" />
         <Meta />
         <Links />
       </head>

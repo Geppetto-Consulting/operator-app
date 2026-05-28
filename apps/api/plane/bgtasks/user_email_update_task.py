@@ -83,7 +83,7 @@ def send_email_update_confirmation(email):
         ) = get_email_configuration()
 
         # Send the confirmation email
-        subject = "Promptable Operator email address successfully updated"
+        subject = "Operator email address successfully updated"
         context = {"email": email}
 
         html_content = render_email_template("emails/user/email_updated.html", context)

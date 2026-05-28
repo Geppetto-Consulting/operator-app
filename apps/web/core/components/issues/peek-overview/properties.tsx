@@ -140,7 +140,7 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
             />
             <span className="grow truncate text-body-xs-medium leading-5 text-secondary">
               {createdByDetails?.display_name.includes("-intake")
-                ? "Promptable Operator"
+                ? "Operator"
                 : createdByDetails?.display_name}
             </span>
           </SidebarPropertyListItem>

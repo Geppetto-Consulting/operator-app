@@ -9,7 +9,7 @@ import { create } from "storybook/theming";
 
 const planeTheme = create({
   base: "dark",
-  brandTitle: "Promptable Operator UI",
+  brandTitle: "Operator UI",
   brandUrl: "https://plane.so",
   brandImage: "plane-lockup-light.svg",
   brandTarget: "_self",

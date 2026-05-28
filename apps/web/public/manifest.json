@@ -1,5 +1,5 @@
 {
-  "name": "Promptable Operator",
+  "name": "Operator",
   "short_name": "Operator",
   "icons": [
     {
@@ -19,8 +19,8 @@
       "type": "image/png"
     }
   ],
-  "theme_color": "#FFFFFF",
-  "background_color": "#FFFFFF",
+  "theme_color": "#1A101D",
+  "background_color": "#1A101D",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait"

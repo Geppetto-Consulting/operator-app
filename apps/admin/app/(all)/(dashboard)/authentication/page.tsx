@@ -169,6 +169,6 @@ const InstanceAuthenticationPage = observer(function InstanceAuthenticationPage(
   );
 });
 
-export const meta: Route.MetaFunction = () => [{ title: "Authentication Settings - Promptable Operator" }];
+export const meta: Route.MetaFunction = () => [{ title: "Authentication Settings - Operator" }];
 
 export default InstanceAuthenticationPage;

@@ -14,7 +14,7 @@
  *   - [ours: brand] tag any commit that touches this file
  *   - never delete the upstream copyright preamble — only add ours
  */
-export const PRODUCT_NAME = "Promptable Operator";
+export const PRODUCT_NAME = "Operator";
 export const PRODUCT_NAME_SHORT = "Operator";
 export const COMPANY_NAME = "Promptable";
 export const COMPANY_LEGAL_NAME = "Promptable Ltd";

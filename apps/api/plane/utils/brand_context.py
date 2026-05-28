@@ -1,14 +1,14 @@
 # Copyright (c) 2026-present Promptable Ltd and contributors
 # SPDX-License-Identifier: AGPL-3.0-only
 #
-# Promptable Operator fork (ENG-113) — single brand seam for the Django side.
+# Operator fork (ENG-113) — single brand seam for the Django side.
 # Mirrors packages/constants/src/brand.ts. Future per-workspace branding
 # (Phase 2 / ENG-114) resolves overrides on top of these defaults via the same dict.
 
 from django.template.loader import render_to_string
 
 BRAND_CONTEXT_DEFAULTS = {
-    "brand_name": "Promptable Operator",
+    "brand_name": "Operator",
     "brand_name_short": "Operator",
     "company_name": "Promptable",
     "company_legal_name": "Promptable Ltd",

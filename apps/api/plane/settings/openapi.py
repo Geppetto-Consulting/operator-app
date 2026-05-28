@@ -12,14 +12,14 @@ SPECTACULAR_SETTINGS = {
     # ========================================================================
     # Basic API Information
     # ========================================================================
-    "TITLE": "The Promptable Operator REST API",
+    "TITLE": "The Operator REST API",
     "DESCRIPTION": (
-        "The Promptable Operator REST API\n\n"
+        "The Operator REST API\n\n"
         "Visit our quick start guide and full API documentation at "
         "[developers.plane.so](https://developers.plane.so/api-reference/introduction)."
     ),
     "CONTACT": {
-        "name": "Promptable Operator",
+        "name": "Operator",
         "url": "https://plane.so",
         "email": "support@plane.so",
     },

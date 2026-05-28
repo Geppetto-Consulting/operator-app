@@ -4,9 +4,9 @@
   "display": "standalone",
   "scope": "/",
   "start_url": "/",
-  "name": "Promptable Operator | The agent-native operator stack for high-velocity teams.",
+  "name": "Operator | The agent-native operator stack for high-velocity teams.",
   "short_name": "Operator",
-  "description": "Promptable Operator — the agent-native operator stack for high-velocity teams.",
+  "description": "Operator — the agent-native operator stack for high-velocity teams.",
   "icons": [
     {
       "src": "/icon-192x192.png",

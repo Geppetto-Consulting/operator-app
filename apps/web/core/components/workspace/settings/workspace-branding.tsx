@@ -261,7 +261,7 @@ export const WorkspaceBranding = observer(function WorkspaceBranding() {
         <section className="flex flex-col gap-3">
           <h3 className="text-h6-semibold">Product name override (optional)</h3>
           <p className="text-body-sm-regular text-tertiary">
-            Override the &ldquo;Promptable Operator&rdquo; product name in transactional emails for users in this
+            Override the &ldquo;Operator&rdquo; product name in transactional emails for users in this
             workspace. Leave blank to use the default.
           </p>
           <Controller
@@ -275,7 +275,7 @@ export const WorkspaceBranding = observer(function WorkspaceBranding() {
                 value={value ?? ""}
                 onChange={onChange}
                 ref={ref}
-                placeholder="Promptable Operator"
+                placeholder="Operator"
                 className="w-full rounded-md"
                 disabled={!isAdmin}
               />

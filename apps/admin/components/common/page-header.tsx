@@ -10,7 +10,7 @@ type TPageHeader = {
 };
 
 export function PageHeader(props: TPageHeader) {
-  const { title = "God Mode - Promptable Operator", description = "Promptable Operator god mode" } = props;
+  const { title = "God Mode - Operator", description = "Operator god mode" } = props;
 
   return (
     <>

@@ -57,7 +57,7 @@ def project_add_user_email(current_site, project_member_id, invitor_id):
         ) = get_email_configuration()
 
         # Set the subject
-        subject = "You have been invited to a Promptable Operator project"
+        subject = "You have been invited to a Operator project"
 
         # Render the email template
         html_content = render_email_template("emails/notifications/project_addition.html", context)

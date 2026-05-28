@@ -182,18 +182,18 @@
       "description": "Skonfiguruj automatyczne akcje, aby usprawnić przepływ zarządzania projektem i zmniejszyć liczbę zadań ręcznych.",
       "auto-archive": {
         "title": "Automatyczna archiwizacja zamkniętych elementów",
-        "description": "Promptable Operator będzie automatycznie archiwizował elementy, które zostały ukończone lub anulowane.",
+        "description": "Operator będzie automatycznie archiwizował elementy, które zostały ukończone lub anulowane.",
         "duration": "Archiwizuj elementy zamknięte dłużej niż"
       },
       "auto-close": {
         "title": "Automatyczne zamykanie elementów",
-        "description": "Promptable Operator będzie automatycznie zamykał elementy, które nie zostały ukończone lub anulowane.",
+        "description": "Operator będzie automatycznie zamykał elementy, które nie zostały ukończone lub anulowane.",
         "duration": "Zamknij elementy nieaktywne dłużej niż",
         "auto_close_status": "Status automatycznego zamknięcia"
       },
       "auto-remind": {
         "title": "Automatyczne przypomnienia",
-        "description": "Promptable Operator automatycznie wysyła przypomnienia przez e-mail i powiadomienia w aplikacji, aby Twoja ekipa utrzymała się na ścieżce do terminów.",
+        "description": "Operator automatycznie wysyła przypomnienia przez e-mail i powiadomienia w aplikacji, aby Twoja ekipa utrzymała się na ścieżce do terminów.",
         "duration": "Wyślij przypomnienie przed"
       }
     },
@@ -371,7 +371,7 @@
         },
         "email": {
           "title": "E-mail",
-          "description": "Zbieraj nowe elementy pracy od każdego, kto wyśle e-mail na adres Promptable Operator.",
+          "description": "Zbieraj nowe elementy pracy od każdego, kto wyśle e-mail na adres Operator.",
           "fieldName": "ID e-mail"
         },
         "form": {
