@@ -70,6 +70,9 @@ export const getTabUrl = (workspaceSlug: string, projectId: string, tabKey: stri
     cycles: `${baseUrl}/cycles`,
     modules: `${baseUrl}/modules`,
     views: `${baseUrl}/views`,
+    // [ours: views] ENG-276 — saved-Views list lives at /views/list/ so it can
+    // coexist with the project Dashboard repurpose of /views/ (ENG-179).
+    views_list: `${baseUrl}/views/list`,
     pages: `${baseUrl}/pages`,
     intake: `${baseUrl}/intake`,
     overview: `${baseUrl}/overview`,

@@ -178,6 +178,18 @@ export const coreRoutes: RouteConfigEntry[] = [
             ),
           ]),
 
+          // [ours: views] Saved-Views list — ENG-276.
+          // Sits at /views/list/ so the sidebar can offer a distinct "Views"
+          // tab without colliding with the project Dashboard at /views/
+          // (ENG-179 repurpose). Registered before the `:viewId` dynamic route
+          // so React Router matches "list" as a literal segment.
+          layout("./(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/views/list/layout.tsx", [
+            route(
+              ":workspaceSlug/projects/:projectId/views/list",
+              "./(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/views/list/page.tsx"
+            ),
+          ]),
+
           // View Detail
           layout("./(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/views/(detail)/layout.tsx", [
             route(
@@ -186,7 +198,7 @@ export const coreRoutes: RouteConfigEntry[] = [
             ),
           ]),
 
-          // Views List
+          // Views List (renders project Dashboard — ENG-179 repurpose)
           layout("./(all)/[workspaceSlug]/(projects)/projects/(detail)/[projectId]/views/(list)/layout.tsx", [
             route(
               ":workspaceSlug/projects/:projectId/views",

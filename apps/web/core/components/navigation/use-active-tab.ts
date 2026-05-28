@@ -17,26 +17,37 @@ type UseActiveTabProps = {
 };
 
 export const useActiveTab = ({ navigationItems, pathname, workItemId, workItem, projectId }: UseActiveTabProps) => {
-  // Check if a navigation item is active
-  const isActive = useCallback(
+  // Raw match for a navigation item against the current pathname.
+  // [ours: views] ENG-276 — this is now the "candidate" check; the public
+  // `isActive` below adds longest-href precedence so nested tabs (e.g. Views
+  // at /views/list) win over their parent (Dashboard at /views) when both
+  // would otherwise match. Without that, two tabs would highlight on
+  // /views/list and the active item would resolve to whichever came first
+  // by sortOrder.
+  const matchesPathname = useCallback(
     (item: TNavigationItem) => {
-      // Work item condition
       const workItemCondition = workItemId && workItem && !workItem?.is_epic && workItem?.project_id === projectId;
-      // Epic condition
       const epicCondition = workItemId && workItem && workItem?.is_epic && workItem?.project_id === projectId;
-      // Is active
       const isWorkItemActive = item.key === "work_items" && workItemCondition;
       const isEpicActive = item.key === "epics" && epicCondition;
-      // Pathname condition - use exact match or startsWith for better accuracy
       const isPathnameActive = pathname === item.href || pathname.startsWith(item.href + "/");
-      // Return
-      return isWorkItemActive || isEpicActive || isPathnameActive;
+      return Boolean(isWorkItemActive || isEpicActive || isPathnameActive);
     },
     [pathname, workItem, workItemId, projectId]
   );
 
-  // Find active item
-  const activeItem = useMemo(() => navigationItems.find((item) => isActive(item)), [navigationItems, isActive]);
+  // Longest-matching item among candidates — only one wins.
+  const longestMatch = useMemo(() => {
+    const matches = navigationItems.filter((item) => matchesPathname(item));
+    if (matches.length === 0) return undefined;
+    // oxlint-disable-next-line eslint-plugin-unicorn(no-array-sort)
+    return [...matches].sort((a, b) => b.href.length - a.href.length)[0];
+  }, [navigationItems, matchesPathname]);
 
-  return { isActive, activeItem };
+  const isActive = useCallback(
+    (item: TNavigationItem) => longestMatch?.key === item.key,
+    [longestMatch]
+  );
+
+  return { isActive, activeItem: longestMatch };
 };

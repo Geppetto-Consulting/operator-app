@@ -7,7 +7,15 @@
 import { useMemo, useCallback } from "react";
 // plane imports
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
-import { CycleIcon, IntakeIcon, ModuleIcon, PageIcon, ViewsIcon, WorkItemsIcon } from "@plane/propel/icons";
+import {
+  CycleIcon,
+  DashboardIcon,
+  IntakeIcon,
+  ModuleIcon,
+  PageIcon,
+  ViewsIcon,
+  WorkItemsIcon,
+} from "@plane/propel/icons";
 import type { EUserProjectRoles, IPartialProject } from "@plane/types";
 import type { TNavigationItem } from "@/components/navigation/tab-navigation-root";
 // [ours: terminology] project-aware nav-item label (ENG-157)
@@ -68,14 +76,32 @@ export const useNavigationItems = ({
       },
       {
         // [ours: project dashboards] ENG-179 — Views→Dashboard rename.
+        // Icon swapped from ViewsIcon to DashboardIcon (ENG-276) so the
+        // Dashboard and the restored Views tab are visually distinct.
         i18n_key: "sidebar.views",
         key: "views",
         name: "Dashboard",
         href: `/${wsSlug}/projects/${pId}/views`,
-        icon: ViewsIcon,
+        icon: DashboardIcon,
         access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
         shouldRender: !!project?.issue_views_view,
         sortOrder: 4,
+      },
+      {
+        // [ours: views] ENG-276 — restore the upstream saved-Views list as its
+        // own sidebar tab so cold prospects can discover it after closing the
+        // Start-here page. The route lives at /views/list/ (see routes/core.ts
+        // and app/(all)/.../views/list/page.tsx). Same `issue_views_view` flag
+        // as the Dashboard above — both light up together when the feature is
+        // enabled, both stay hidden when it isn't.
+        i18n_key: "sidebar.views_list",
+        key: "views_list",
+        name: "Views",
+        href: `/${wsSlug}/projects/${pId}/views/list`,
+        icon: ViewsIcon,
+        access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
+        shouldRender: !!project?.issue_views_view,
+        sortOrder: 5,
       },
       {
         i18n_key: "sidebar.pages",
@@ -85,7 +111,7 @@ export const useNavigationItems = ({
         icon: PageIcon,
         access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
         shouldRender: !!project?.page_view,
-        sortOrder: 5,
+        sortOrder: 6,
       },
       {
         i18n_key: "sidebar.intake",
@@ -95,7 +121,7 @@ export const useNavigationItems = ({
         icon: IntakeIcon,
         access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
         shouldRender: !!project?.inbox_view,
-        sortOrder: 6,
+        sortOrder: 7,
       },
     ],
     [project, term.plural]
