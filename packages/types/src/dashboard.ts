@@ -288,6 +288,72 @@ export type TEmailFeedWidgetConfig = TDashboardWidgetBase & {
   limit?: number;
 };
 
+// =============================================================================
+// [ours: ENG-270] Workspace-purpose widgets (Plane-data source for views_list /
+// pages_by_type / recent_pages; pure pass-through for quick_actions / banner)
+// =============================================================================
+
+export type TViewsListWidgetConfig = TDashboardWidgetBase & {
+  type: "views_list";
+  // Either an explicit ordered list of view ids, OR a project-scoped query.
+  view_ids?: string[];
+  // Defaults to the dashboard's own project. The literal string "workspace"
+  // pulls workspace-level Views (project__isnull=True).
+  project_id?: string | "workspace";
+  filter?: { name_prefix?: string };
+  // Caps result count. Default 50, clamped server-side to [0, 200].
+  limit?: number;
+};
+
+export type TPagesByTypeGroupConfig = {
+  title: string;
+  // Case-insensitive prefix match on Page.name. Either name_prefix OR
+  // match_all must be set. match_all picks up everything not claimed by a
+  // prior group (first-match-wins).
+  name_prefix?: string;
+  match_all?: boolean;
+};
+
+export type TPagesByTypeWidgetConfig = TDashboardWidgetBase & {
+  type: "pages_by_type";
+  // Defaults to the dashboard's own project.
+  project_id?: string;
+  groups: TPagesByTypeGroupConfig[];
+  // Default 10, clamped server-side to [0, 100].
+  limit_per_group?: number;
+};
+
+export type TQuickActionConfig = {
+  label: string;
+  url: string;
+  icon?: string;
+  style?: "primary" | "secondary" | "ghost";
+  description?: string;
+};
+
+export type TQuickActionsWidgetConfig = TDashboardWidgetBase & {
+  type: "quick_actions";
+  actions: TQuickActionConfig[];
+};
+
+export type TBannerWidgetConfig = TDashboardWidgetBase & {
+  type: "banner";
+  // TDashboardWidgetBase.title is the banner's main heading; not re-declared.
+  subtitle?: string;
+  body_html?: string;
+  tone?: "neutral" | "info" | "success" | "warning";
+};
+
+export type TRecentPagesWidgetConfig = TDashboardWidgetBase & {
+  type: "recent_pages";
+  // Defaults to the dashboard's own project.
+  project_id?: string;
+  // Case-insensitive icontains match on Page.name.
+  name_filter?: string;
+  // Default 5, clamped server-side to [0, 50].
+  limit?: number;
+};
+
 export type TDashboardWidget =
   | TCountByStateWidgetConfig
   | TCountByPriorityWidgetConfig
@@ -298,7 +364,12 @@ export type TDashboardWidget =
   | TVelocityWidgetConfig
   | TTouchpointDueWidgetConfig
   | TCalendarUpcomingWidgetConfig
-  | TEmailFeedWidgetConfig;
+  | TEmailFeedWidgetConfig
+  | TViewsListWidgetConfig
+  | TPagesByTypeWidgetConfig
+  | TQuickActionsWidgetConfig
+  | TBannerWidgetConfig
+  | TRecentPagesWidgetConfig;
 
 export type TDashboardWidgetType = TDashboardWidget["type"];
 
@@ -438,6 +509,71 @@ export type TEmailFeedWidgetData = {
   connector?: string;
 };
 
+// --- ENG-270 workspace-purpose widget data shapes ---
+
+export type TViewsListEntry = {
+  id: string;
+  name: string;
+  description: string;
+  logo_props: Record<string, unknown>;
+  project_id: string | null;
+  workspace_slug: string | null;
+  // 0=private, 1=public — IssueView.access enum.
+  access: number;
+};
+
+export type TViewsListWidgetData = {
+  views: TViewsListEntry[];
+};
+
+export type TPagesByTypePage = {
+  id: string;
+  name: string;
+  updated_at: string | null;
+};
+
+export type TPagesByTypeGroup = {
+  title: string;
+  pages: TPagesByTypePage[];
+};
+
+export type TPagesByTypeWidgetData = {
+  groups: TPagesByTypeGroup[];
+  workspace_slug: string | null;
+  project_id: string;
+};
+
+export type TQuickActionEntry = {
+  label: string;
+  url: string;
+  icon?: string;
+  style?: "primary" | "secondary" | "ghost";
+  description?: string;
+};
+
+export type TQuickActionsWidgetData = {
+  actions: TQuickActionEntry[];
+};
+
+export type TBannerWidgetData = {
+  title: string;
+  subtitle: string;
+  body_html: string;
+  tone: "neutral" | "info" | "success" | "warning";
+};
+
+export type TRecentPagesEntry = {
+  id: string;
+  name: string;
+  updated_at: string | null;
+};
+
+export type TRecentPagesWidgetData = {
+  pages: TRecentPagesEntry[];
+  workspace_slug: string | null;
+  project_id: string;
+};
+
 export type TDashboardWidgetData =
   | TCountByStateWidgetData
   | TCountByPriorityWidgetData
@@ -448,7 +584,12 @@ export type TDashboardWidgetData =
   | TVelocityWidgetData
   | TTouchpointDueWidgetData
   | TCalendarUpcomingWidgetData
-  | TEmailFeedWidgetData;
+  | TEmailFeedWidgetData
+  | TViewsListWidgetData
+  | TPagesByTypeWidgetData
+  | TQuickActionsWidgetData
+  | TBannerWidgetData
+  | TRecentPagesWidgetData;
 
 // Per-widget error payload (backend may return error keys instead of `data`
 // when a widget is malformed or its compute path fails). See dashboard.py

@@ -25,7 +25,7 @@ from rest_framework.response import Response
 # Module imports
 from plane.app.permissions import ProjectEntityPermission
 from plane.app.views.base import BaseAPIView
-from plane.db.models import Issue, Project, State
+from plane.db.models import Issue, IssueView, Page, Project, State
 from plane.db.models.state import StateGroup
 
 
@@ -444,6 +444,345 @@ def _compute_touchpoint_due(project, widget):
     }
 
 
+# ---------------------------------------------------------------------------
+# ENG-270 — workspace-purpose widgets (views_list / pages_by_type / quick_actions
+# / banner / recent_pages)
+# ---------------------------------------------------------------------------
+#
+# Five widget types that let per-workspace dashboards actually communicate
+# what each workspace does, instead of being stuck rendering CRM-shaped Issue
+# counts. Two read from the IssueView / Page tables (clickable lists of saved
+# Views, grouped Pages, recent Pages). Three are pass-through display-only
+# widgets the orchestrator configures directly (banner header, quick-action
+# button row, free-form actions block). Same compute contract as everything
+# above: project + widget dict → data payload. Failure modes degrade to safe
+# empty payloads — the frontend renders an empty state rather than the whole
+# dashboard 500ing.
+
+
+def _coerce_int(value, default, lo=0, hi=100):
+    """Best-effort int parse with clamping. Used by widgets that accept a
+    `limit` knob from JSON config (the value may be a string from older
+    callers or an int from newer ones)."""
+    try:
+        out = int(value)
+    except (TypeError, ValueError):
+        out = default
+    return max(lo, min(out, hi))
+
+
+def _compute_views_list(project, widget):
+    """Clickable list of saved Views — either an explicit `view_ids` list or
+    a project-scoped query with an optional name_prefix filter.
+
+    Config shape (either form):
+        { "view_ids": ["uuid", ...] }
+        { "project_id": "uuid", "filter": { "name_prefix": "Sector — " } }
+
+    `project_id` defaults to the dashboard's own project. Passing the literal
+    string "workspace" pulls workspace-level Views (project__isnull=True). The
+    workspace scope is enforced regardless — Views from other workspaces are
+    never returned.
+
+    Data shape:
+        { "views": [{id, name, description, logo_props, project_id,
+                     workspace_slug, access}, ...] }
+
+    The frontend resolves /<workspace_slug>/projects/<project_id>/views/<id>/
+    for project-scoped Views and /<workspace_slug>/workspace-views/<id>/ for
+    workspace-level Views.
+    """
+    workspace_id = project.workspace_id
+    workspace_slug = project.workspace.slug if project.workspace_id else None
+
+    explicit_ids = widget.get("view_ids")
+    queryset = IssueView.objects.filter(workspace_id=workspace_id)
+    if isinstance(explicit_ids, list) and explicit_ids:
+        # Explicit pin: render exactly these Views in the order supplied.
+        # Filter to non-empty strings only to avoid an ORM error on bad input.
+        cleaned_ids = [v for v in explicit_ids if isinstance(v, str) and v]
+        if not cleaned_ids:
+            return {"views": []}
+        queryset = queryset.filter(pk__in=cleaned_ids)
+    else:
+        project_arg = widget.get("project_id")
+        if project_arg == "workspace":
+            queryset = queryset.filter(project__isnull=True)
+        else:
+            # Default to the dashboard's project when project_id is missing
+            # — callers configuring "the Views on this project" can omit it.
+            target_project_id = project_arg or str(project.id)
+            queryset = queryset.filter(project_id=target_project_id)
+
+        filt = widget.get("filter") or {}
+        if isinstance(filt, dict):
+            name_prefix = filt.get("name_prefix")
+            if isinstance(name_prefix, str) and name_prefix:
+                queryset = queryset.filter(name__istartswith=name_prefix)
+
+    queryset = queryset.order_by("sort_order", "name")
+
+    # Limit defends against a misconfigured dashboard surfacing 1000 Views.
+    limit = _coerce_int(widget.get("limit", 50), 50, lo=0, hi=200)
+    queryset = queryset[:limit]
+
+    views_out = []
+    if isinstance(explicit_ids, list) and explicit_ids:
+        # Preserve the caller's order for explicit pins (pk__in doesn't).
+        by_id = {str(v.id): v for v in queryset}
+        ordered = [by_id[v] for v in explicit_ids if v in by_id]
+    else:
+        ordered = list(queryset)
+
+    for view in ordered:
+        views_out.append(
+            {
+                "id": str(view.id),
+                "name": view.name,
+                "description": view.description or "",
+                "logo_props": view.logo_props or {},
+                "project_id": str(view.project_id) if view.project_id else None,
+                "workspace_slug": workspace_slug,
+                "access": view.access,
+            }
+        )
+
+    return {"views": views_out}
+
+
+def _compute_pages_by_type(project, widget):
+    """Pages grouped by name-prefix (or `match_all` for an ungrouped catch-all).
+
+    Config shape:
+        { "project_id": "uuid",
+          "groups": [
+            {"title": "Acquisition Assessments", "name_prefix": "Acquisition Assessment"},
+            {"title": "Sector maps", "name_prefix": "sector map"},
+            {"title": "All other", "match_all": true},
+          ],
+          "limit_per_group": 10 }
+
+    `project_id` defaults to the dashboard's project. Matching is
+    case-insensitive `name__istartswith`. `match_all` groups catch everything
+    not already matched by an earlier group. A page belongs to at most one
+    group (first match wins) so the same page doesn't appear twice.
+
+    Data shape:
+        { "groups": [
+            {"title": "...", "pages": [{id, name, updated_at}, ...]},
+            ...
+          ],
+          "workspace_slug": "...",
+          "project_id": "..." }
+    """
+    workspace_slug = project.workspace.slug if project.workspace_id else None
+    target_project_id = widget.get("project_id") or str(project.id)
+
+    groups_cfg = widget.get("groups")
+    if not isinstance(groups_cfg, list) or not groups_cfg:
+        return {
+            "groups": [],
+            "workspace_slug": workspace_slug,
+            "project_id": target_project_id,
+        }
+
+    limit_per_group = _coerce_int(widget.get("limit_per_group", 10), 10, lo=0, hi=100)
+
+    # Workspace scope enforced — projects__id ties to the project's M2M.
+    base = (
+        Page.objects.filter(
+            workspace_id=project.workspace_id,
+            projects__id=target_project_id,
+            archived_at__isnull=True,
+        )
+        .order_by("-updated_at")
+        .distinct()
+    )
+
+    # Iterate groups in declaration order. For each, pull a fresh queryset
+    # (Postgres can plan each independently — total page count is small) and
+    # subtract already-claimed page IDs. `match_all` skips the istartswith
+    # filter so it picks up everything not yet claimed.
+    claimed = set()
+    out_groups = []
+    for group in groups_cfg:
+        if not isinstance(group, dict):
+            continue
+        title = group.get("title")
+        if not isinstance(title, str) or not title:
+            continue
+
+        qs = base
+        if group.get("match_all") is True:
+            pass  # no name filter
+        else:
+            name_prefix = group.get("name_prefix")
+            if not isinstance(name_prefix, str) or not name_prefix:
+                # Group config without name_prefix AND not match_all → empty
+                # group rather than silently surfacing everything.
+                out_groups.append({"title": title, "pages": []})
+                continue
+            qs = qs.filter(name__istartswith=name_prefix)
+
+        if claimed:
+            qs = qs.exclude(pk__in=claimed)
+
+        pages_out = []
+        for page in qs[:limit_per_group]:
+            pages_out.append(
+                {
+                    "id": str(page.id),
+                    "name": page.name or "",
+                    "updated_at": (
+                        page.updated_at.isoformat() if page.updated_at else None
+                    ),
+                }
+            )
+            claimed.add(page.id)
+
+        out_groups.append({"title": title, "pages": pages_out})
+
+    return {
+        "groups": out_groups,
+        "workspace_slug": workspace_slug,
+        "project_id": target_project_id,
+    }
+
+
+def _compute_quick_actions(project, widget):
+    """Clickable action buttons — pure pass-through. The orchestrator owns
+    the URLs (typically signed 🚀 trigger links + workspace doc links).
+
+    Config shape:
+        { "actions": [
+            {"label": "Trigger Acquisition Assessment",
+             "url": "https://...",
+             "icon": "🚀",
+             "style": "primary" | "secondary" | "ghost",
+             "description": "Optional one-liner under the label"},
+            ...
+          ] }
+
+    Data shape: the validated actions list. We drop entries that don't have
+    both `label` and `url` rather than rendering broken buttons.
+    """
+    actions_cfg = widget.get("actions")
+    if not isinstance(actions_cfg, list):
+        return {"actions": []}
+
+    actions_out = []
+    for action in actions_cfg:
+        if not isinstance(action, dict):
+            continue
+        label = action.get("label")
+        url = action.get("url")
+        if not isinstance(label, str) or not label:
+            continue
+        if not isinstance(url, str) or not url:
+            continue
+        entry = {"label": label, "url": url}
+        icon = action.get("icon")
+        if isinstance(icon, str) and icon:
+            entry["icon"] = icon
+        style = action.get("style")
+        if style in ("primary", "secondary", "ghost"):
+            entry["style"] = style
+        description = action.get("description")
+        if isinstance(description, str) and description:
+            entry["description"] = description
+        actions_out.append(entry)
+
+    return {"actions": actions_out}
+
+
+def _compute_banner(project, widget):
+    """Markdown/HTML header block — pass-through. The HTML is operator-trusted
+    (set via MCP by the orchestrator, not user-input) so the frontend renders
+    it via dangerouslySetInnerHTML.
+
+    Config shape:
+        { "title": "Sentio — M&A Origination",
+          "subtitle": "Optional secondary line",
+          "body_html": "<p>…</p>",
+          "tone": "neutral" | "info" | "success" | "warning" }
+
+    Data shape: validated fields, defaulted where missing so the frontend
+    can render a usable card even with sparse config.
+    """
+    title = widget.get("title", "")
+    if not isinstance(title, str):
+        title = ""
+    subtitle = widget.get("subtitle", "")
+    if not isinstance(subtitle, str):
+        subtitle = ""
+    body_html = widget.get("body_html", "")
+    if not isinstance(body_html, str):
+        body_html = ""
+    tone = widget.get("tone")
+    if tone not in ("neutral", "info", "success", "warning"):
+        tone = "neutral"
+
+    return {
+        "title": title,
+        "subtitle": subtitle,
+        "body_html": body_html,
+        "tone": tone,
+    }
+
+
+def _compute_recent_pages(project, widget):
+    """Newest N Pages with an optional name filter — timeline-style list.
+
+    Config shape:
+        { "project_id": "uuid",
+          "name_filter": "Acquisition Assessment",
+          "limit": 5 }
+
+    `project_id` defaults to the dashboard's project; `name_filter` does a
+    case-insensitive `name__icontains`. Archived pages are excluded.
+
+    Data shape:
+        { "pages": [{id, name, updated_at}, ...],
+          "workspace_slug": "...",
+          "project_id": "..." }
+    """
+    workspace_slug = project.workspace.slug if project.workspace_id else None
+    target_project_id = widget.get("project_id") or str(project.id)
+    limit = _coerce_int(widget.get("limit", 5), 5, lo=0, hi=50)
+
+    queryset = (
+        Page.objects.filter(
+            workspace_id=project.workspace_id,
+            projects__id=target_project_id,
+            archived_at__isnull=True,
+        )
+        .order_by("-updated_at")
+        .distinct()
+    )
+
+    name_filter = widget.get("name_filter")
+    if isinstance(name_filter, str) and name_filter:
+        queryset = queryset.filter(name__icontains=name_filter)
+
+    pages_out = []
+    for page in queryset[:limit]:
+        pages_out.append(
+            {
+                "id": str(page.id),
+                "name": page.name or "",
+                "updated_at": (
+                    page.updated_at.isoformat() if page.updated_at else None
+                ),
+            }
+        )
+
+    return {
+        "pages": pages_out,
+        "workspace_slug": workspace_slug,
+        "project_id": target_project_id,
+    }
+
+
 # Widget-type registry. Adding a new widget type means writing the compute
 # function and registering it here — no other call sites need to change.
 WIDGET_REGISTRY = {
@@ -456,6 +795,12 @@ WIDGET_REGISTRY = {
     "pipeline_funnel": _compute_pipeline_funnel,
     "velocity": _compute_velocity,
     "touchpoint_due": _compute_touchpoint_due,
+    # ENG-270 — workspace-purpose widgets.
+    "views_list": _compute_views_list,
+    "pages_by_type": _compute_pages_by_type,
+    "quick_actions": _compute_quick_actions,
+    "banner": _compute_banner,
+    "recent_pages": _compute_recent_pages,
 }
 
 

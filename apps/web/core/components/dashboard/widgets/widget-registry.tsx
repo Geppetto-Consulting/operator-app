@@ -9,16 +9,21 @@
 // → data source. Unknown types fall back to a degraded tile (no crash).
 
 import type { TDashboardWidget, TDashboardWidgetData, TDashboardWidgetType } from "@plane/types";
+import { BannerWidget } from "./banner";
 import { CalendarUpcomingWidget } from "./calendar-upcoming";
 import { CountByPriorityWidget } from "./count-by-priority";
 import { CountByStateWidget } from "./count-by-state";
 import { DueSoonWidget } from "./due-soon";
 import { EmailFeedWidget } from "./email-feed";
 import { MetricWidget } from "./metric";
+import { PagesByTypeWidget } from "./pages-by-type";
 import { PipelineFunnelWidget } from "./pipeline-funnel";
+import { QuickActionsWidget } from "./quick-actions";
 import { RecentActivityWidget } from "./recent-activity";
+import { RecentPagesWidget } from "./recent-pages";
 import { TouchpointDueWidget } from "./touchpoint-due";
 import { VelocityWidget } from "./velocity";
+import { ViewsListWidget } from "./views-list";
 import { WidgetShell } from "./widget-shell";
 
 export type TWidgetRenderProps = {
@@ -43,6 +48,12 @@ export const SUPPORTED_WIDGET_TYPES: readonly TDashboardWidgetType[] = [
   // ENG-197 — Phase 1 connector widgets (operator-mcp source).
   "calendar_upcoming",
   "email_feed",
+  // ENG-270 — workspace-purpose widgets (plane source).
+  "views_list",
+  "pages_by_type",
+  "quick_actions",
+  "banner",
+  "recent_pages",
 ] as const;
 
 /**
@@ -70,6 +81,12 @@ export const WIDGET_DATA_SOURCE: Record<TDashboardWidgetType, TWidgetDataSource>
   // ENG-197 — Phase 1 operator-mcp connector widgets.
   calendar_upcoming: "operator-mcp",
   email_feed: "operator-mcp",
+  // ENG-270 — workspace-purpose widgets (Plane data + pass-through).
+  views_list: "plane",
+  pages_by_type: "plane",
+  quick_actions: "plane",
+  banner: "plane",
+  recent_pages: "plane",
 };
 
 export function getWidgetDataSource(type: string): TWidgetDataSource {
@@ -108,6 +125,17 @@ export function renderWidget(props: TWidgetRenderProps): React.ReactNode {
       return <CalendarUpcomingWidget config={config} data={data as never} workspaceSlug={workspaceSlug} />;
     case "email_feed":
       return <EmailFeedWidget config={config} data={data as never} workspaceSlug={workspaceSlug} />;
+    // ENG-270 — workspace-purpose widgets.
+    case "views_list":
+      return <ViewsListWidget config={config} data={data as never} />;
+    case "pages_by_type":
+      return <PagesByTypeWidget config={config} data={data as never} />;
+    case "quick_actions":
+      return <QuickActionsWidget config={config} data={data as never} />;
+    case "banner":
+      return <BannerWidget config={config} data={data as never} />;
+    case "recent_pages":
+      return <RecentPagesWidget config={config} data={data as never} />;
     default:
       return <UnsupportedWidget type={(config as { type?: string }).type} />;
   }
