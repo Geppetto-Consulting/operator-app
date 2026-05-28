@@ -126,6 +126,10 @@ export enum EProjectFeatureKey {
   CYCLES = "cycles",
   MODULES = "modules",
   VIEWS = "views",
+  // [ours: views] ENG-276 — saved-Views list restored at /views/list/ so the
+  // sidebar can offer it as its own tab alongside the project Dashboard
+  // (ENG-179 repurpose) at /views/.
+  VIEWS_LIST = "views_list",
   PAGES = "pages",
   INTAKE = "intake",
 }

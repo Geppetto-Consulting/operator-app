@@ -6,7 +6,15 @@
 
 // plane imports
 import { EUserPermissions, EProjectFeatureKey } from "@plane/constants";
-import { CycleIcon, IntakeIcon, ModuleIcon, PageIcon, ViewsIcon, WorkItemsIcon } from "@plane/propel/icons";
+import {
+  CycleIcon,
+  DashboardIcon,
+  IntakeIcon,
+  ModuleIcon,
+  PageIcon,
+  ViewsIcon,
+  WorkItemsIcon,
+} from "@plane/propel/icons";
 // components
 import type { TNavigationItem } from "@/components/workspace/sidebar/project-navigation";
 
@@ -52,16 +60,28 @@ export const getProjectFeatureNavigation = (
     sortOrder: 3,
   },
   {
-    // [ours: project dashboards] ENG-179 — Views→Dashboard rename. See
-    // workspace/sidebar/project-navigation.tsx for the matching change.
+    // [ours: project dashboards] ENG-179 — Views→Dashboard rename.
+    // Icon swapped from ViewsIcon to DashboardIcon (ENG-276) to distinguish
+    // from the restored Views entry below.
     i18n_key: "sidebar.views",
     key: EProjectFeatureKey.VIEWS,
     name: "Dashboard",
     href: `/${workspaceSlug}/projects/${projectId}/views`,
-    icon: ViewsIcon,
+    icon: DashboardIcon,
     access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
     shouldRender: project.issue_views_view,
     sortOrder: 4,
+  },
+  {
+    // [ours: views] ENG-276 — restored saved-Views list at /views/list/.
+    i18n_key: "sidebar.views_list",
+    key: EProjectFeatureKey.VIEWS_LIST,
+    name: "Views",
+    href: `/${workspaceSlug}/projects/${projectId}/views/list`,
+    icon: ViewsIcon,
+    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
+    shouldRender: project.issue_views_view,
+    sortOrder: 5,
   },
   {
     i18n_key: "sidebar.pages",
@@ -71,7 +91,7 @@ export const getProjectFeatureNavigation = (
     icon: PageIcon,
     access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
     shouldRender: project.page_view,
-    sortOrder: 5,
+    sortOrder: 6,
   },
   {
     i18n_key: "sidebar.intake",
@@ -81,6 +101,6 @@ export const getProjectFeatureNavigation = (
     icon: IntakeIcon,
     access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
     shouldRender: project.inbox_view,
-    sortOrder: 6,
+    sortOrder: 7,
   },
 ];

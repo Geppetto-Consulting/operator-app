@@ -10,7 +10,15 @@ import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { EUserPermissionsLevel, EUserPermissions } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { CycleIcon, IntakeIcon, ModuleIcon, PageIcon, ViewsIcon, WorkItemsIcon } from "@plane/propel/icons";
+import {
+  CycleIcon,
+  DashboardIcon,
+  IntakeIcon,
+  ModuleIcon,
+  PageIcon,
+  ViewsIcon,
+  WorkItemsIcon,
+} from "@plane/propel/icons";
 import type { EUserProjectRoles } from "@plane/types";
 // plane ui
 // components
@@ -105,17 +113,30 @@ export const ProjectNavigation = observer(function ProjectNavigation(props: TPro
         sortOrder: 3,
       },
       {
-        // [ours: project dashboards] ENG-179 — Views→Dashboard rename. Route
-        // path stays `/views/` (we render Dashboard there); i18n key already
-        // points to "Dashboard". Fallback `name` keeps the new label.
+        // [ours: project dashboards] ENG-179 — Views→Dashboard rename.
+        // Icon swapped to DashboardIcon in ENG-276 so it's visually distinct
+        // from the restored Views tab below.
         i18n_key: "sidebar.views",
         key: "views",
         name: "Dashboard",
         href: `/${wsSlug}/projects/${pId}/views`,
-        icon: ViewsIcon,
+        icon: DashboardIcon,
         access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
         shouldRender: project?.issue_views_view ?? false,
         sortOrder: 4,
+      },
+      {
+        // [ours: views] ENG-276 — restore upstream saved-Views list as its
+        // own sidebar entry pointing at /views/list/. Same `issue_views_view`
+        // gate so it co-lights / co-hides with Dashboard above.
+        i18n_key: "sidebar.views_list",
+        key: "views_list",
+        name: "Views",
+        href: `/${wsSlug}/projects/${pId}/views/list`,
+        icon: ViewsIcon,
+        access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
+        shouldRender: project?.issue_views_view ?? false,
+        sortOrder: 5,
       },
       {
         i18n_key: "sidebar.pages",
@@ -125,7 +146,7 @@ export const ProjectNavigation = observer(function ProjectNavigation(props: TPro
         icon: PageIcon,
         access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
         shouldRender: project?.page_view ?? false,
-        sortOrder: 5,
+        sortOrder: 6,
       },
       {
         i18n_key: "sidebar.intake",
@@ -135,7 +156,7 @@ export const ProjectNavigation = observer(function ProjectNavigation(props: TPro
         icon: IntakeIcon,
         access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
         shouldRender: project?.inbox_view ?? false,
-        sortOrder: 6,
+        sortOrder: 7,
       },
     ],
     [project]
@@ -165,21 +186,31 @@ export const ProjectNavigation = observer(function ProjectNavigation(props: TPro
     return sortedNavigationItems;
   }, [workspaceSlug, projectId, baseNavigation, additionalNavigationItems]);
 
-  const isActive = useCallback(
+  // Raw match — the public `isActive` below adds longest-href precedence so
+  // nested sidebar entries (Views at /views/list) win over their parent
+  // (Dashboard at /views) when both would otherwise match. ENG-276.
+  const matchesPathname = useCallback(
     (item: TNavigationItem) => {
-      // work item condition
       const workItemCondition = workItemId && workItem && !workItem?.is_epic && workItem?.project_id === projectId;
-      // epic condition
       const epicCondition = workItemId && workItem && workItem?.is_epic && workItem?.project_id === projectId;
-      // is active
       const isWorkItemActive = item.key === "work_items" && workItemCondition;
       const isEpicActive = item.key === "epics" && epicCondition;
-      // pathname condition
       const isPathnameActive = pathname.includes(item.href);
-      // return
-      return isWorkItemActive || isEpicActive || isPathnameActive;
+      return Boolean(isWorkItemActive || isEpicActive || isPathnameActive);
     },
     [pathname, workItem, workItemId, projectId]
+  );
+
+  const longestMatchKey = useMemo(() => {
+    const matches = navigationItemsMemo.filter((item) => matchesPathname(item));
+    if (matches.length === 0) return undefined;
+    // oxlint-disable-next-line eslint-plugin-unicorn(no-array-sort)
+    return [...matches].sort((a, b) => b.href.length - a.href.length)[0].key;
+  }, [navigationItemsMemo, matchesPathname]);
+
+  const isActive = useCallback(
+    (item: TNavigationItem) => longestMatchKey === item.key,
+    [longestMatchKey]
   );
 
   if (!project) return null;
