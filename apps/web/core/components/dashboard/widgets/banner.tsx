@@ -19,9 +19,14 @@ type Props = {
   data: TBannerWidgetData;
 };
 
+// ENG-298 — switched neutral/info to defined semantic tokens (border-subtle /
+// bg-layer-2 / bg-accent-subtle). The legacy `custom-border-200` /
+// `custom-background-100` classes are not defined in the current Tailwind v4
+// theme — using them caused the `border` shorthand to fall through to
+// `currentColor`, which is what Andrew flagged as "dark and harsh".
 const TONE_CLASS = {
-  neutral: "bg-custom-background-100 border-custom-border-200",
-  info: "bg-accent-subtle border-custom-border-200",
+  neutral: "bg-layer-2 border-subtle",
+  info: "bg-accent-subtle border-subtle",
   success: "bg-green-50/40 dark:bg-green-900/10 border-green-200/60 dark:border-green-800/40",
   warning:
     "bg-yellow-50/40 dark:bg-yellow-900/10 border-yellow-200/60 dark:border-yellow-800/40",
@@ -42,9 +47,9 @@ export const BannerWidget = observer(function BannerWidget({ config, data }: Pro
       )}
     >
       <div className="flex flex-col gap-0.5">
-        <h2 className="text-18 font-semibold text-custom-text-100">{heading}</h2>
+        <h2 className="text-18 font-semibold text-primary">{heading}</h2>
         {data.subtitle ? (
-          <p className="text-13 text-custom-text-300">{data.subtitle}</p>
+          <p className="text-13 text-secondary">{data.subtitle}</p>
         ) : null}
       </div>
       {data.body_html ? (
@@ -52,7 +57,7 @@ export const BannerWidget = observer(function BannerWidget({ config, data }: Pro
           // body_html is operator-trusted markup populated via MCP, not user
           // input. Same trust posture as Page descriptions elsewhere in the
           // fork. See ENG-270 brief — orchestrator owns the config shape.
-          className="text-13 leading-relaxed text-custom-text-200 [&_a]:text-accent-primary [&_a]:underline [&_p]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
+          className="text-13 leading-relaxed text-secondary [&_a]:text-accent-secondary [&_a]:underline [&_p]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
           dangerouslySetInnerHTML={{ __html: data.body_html }}
         />
       ) : null}

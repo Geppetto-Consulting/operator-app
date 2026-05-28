@@ -19,13 +19,20 @@ type Props = {
   data: TQuickActionsWidgetData;
 };
 
+// ENG-298 — softened to defined semantic tokens. Secondary + ghost now use
+// `border-subtle` (neutral-400) instead of the undefined `custom-border-200`,
+// which means the borders actually render as the soft pale gray the design
+// intends, not as `currentColor` (i.e. button text colour) bleeding through.
+// Primary keeps the brand-default fill (`bg-accent-primary`) and inverse text
+// (`text-on-color`) — those tokens ARE defined in @theme inline and will
+// pick up correctly once the next build pass picks them up.
 const STYLE_CLASS = {
   primary:
     "bg-accent-primary text-on-color hover:bg-accent-primary-hover border-transparent",
   secondary:
-    "bg-custom-background-90 text-custom-text-100 hover:bg-custom-background-80 border-custom-border-200",
+    "bg-layer-1 text-primary hover:bg-layer-1-hover border-subtle",
   ghost:
-    "bg-transparent text-custom-text-100 hover:bg-custom-background-90 border-custom-border-200",
+    "bg-transparent text-primary hover:bg-layer-1 border-subtle",
 } as const;
 
 export const QuickActionsWidget = observer(function QuickActionsWidget({ config, data }: Props) {

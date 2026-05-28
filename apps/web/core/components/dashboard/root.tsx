@@ -204,7 +204,7 @@ export const Dashboard = observer(function Dashboard({ workspaceSlug, projectId 
               <div
                 key={widget.id}
                 className={cn(
-                  "border-custom-border-200 bg-custom-background-90 min-h-[180px] animate-pulse rounded-lg border",
+                  "border-subtle bg-layer-1 min-h-[180px] animate-pulse rounded-lg border",
                   SIZE_CLASS[size]
                 )}
               />
@@ -226,7 +226,7 @@ export const Dashboard = observer(function Dashboard({ workspaceSlug, projectId 
               <div
                 key={widget.id}
                 className={cn(
-                  "border-custom-border-200 bg-custom-background-90 min-h-[180px] animate-pulse rounded-lg border",
+                  "border-subtle bg-layer-1 min-h-[180px] animate-pulse rounded-lg border",
                   SIZE_CLASS[size]
                 )}
               />

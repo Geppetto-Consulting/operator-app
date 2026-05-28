@@ -81,9 +81,15 @@ export const EntryPointsWidget = observer(function EntryPointsWidget(props: THom
             <div
               className={cn(
                 "group flex h-full min-h-[112px] flex-col gap-2 rounded-xl border p-5",
-                "border-custom-border-200 bg-custom-background-100",
+                // ENG-298 — defined semantic tokens (border-subtle / bg-layer-2)
+                // instead of the legacy `custom-border-200` / `custom-background-100`
+                // classes that don't resolve in the current Tailwind v4 theme.
+                // This matches the Plane card pattern used elsewhere (see
+                // cycle-peek-overview.tsx) and gives a soft pale-gray border
+                // rather than the `currentColor` fallback.
+                "border-subtle bg-layer-2",
                 "transition-all duration-150",
-                "hover:border-custom-primary-100/40 hover:bg-custom-background-90",
+                "hover:border-accent-strong/40 hover:bg-layer-1",
                 "hover:shadow-[0_2px_12px_rgba(0,0,0,0.04)]"
               )}
             >
@@ -91,8 +97,11 @@ export const EntryPointsWidget = observer(function EntryPointsWidget(props: THom
                 <div
                   className={cn(
                     "flex h-9 w-9 items-center justify-center rounded-lg",
-                    "bg-custom-primary-100/10 text-18",
-                    "transition-colors group-hover:bg-custom-primary-100/15"
+                    // ENG-298 — `bg-accent-subtle` is defined and semantically
+                    // the right token for a tinted icon tile; the prior
+                    // `bg-custom-primary-100/10` did not resolve.
+                    "bg-accent-subtle text-18",
+                    "transition-colors group-hover:bg-accent-subtle-hover"
                   )}
                   aria-hidden="true"
                 >
@@ -100,9 +109,9 @@ export const EntryPointsWidget = observer(function EntryPointsWidget(props: THom
                 </div>
               ) : null}
               <div className="flex flex-1 flex-col gap-1">
-                <h3 className="text-15 font-semibold text-custom-text-100">{card.label}</h3>
+                <h3 className="text-15 font-semibold text-primary">{card.label}</h3>
                 {card.description ? (
-                  <p className="text-13 text-custom-text-300">{card.description}</p>
+                  <p className="text-13 text-secondary">{card.description}</p>
                 ) : null}
               </div>
             </div>
