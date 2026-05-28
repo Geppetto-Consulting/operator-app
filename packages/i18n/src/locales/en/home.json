@@ -58,6 +58,9 @@
     "quick_tutorial": {
       "title": "Quick tutorial"
     },
+    "entry_points": {
+      "title": "Start here"
+    },
     "widget": {
       "reordered_successfully": "Widget reordered successfully.",
       "reordering_failed": "Error occurred while reordering widget."

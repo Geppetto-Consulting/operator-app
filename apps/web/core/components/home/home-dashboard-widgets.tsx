@@ -22,7 +22,7 @@ import { useProject } from "@/hooks/store/use-project";
 import { HomePageHeader } from "@/plane-web/components/home/header";
 // local imports
 import { StickiesWidget } from "../stickies/widget";
-import { HomeLoader, NoProjectsEmptyState, RecentActivityWidget } from "./widgets";
+import { HomeLoader, NoProjectsEmptyState, RecentActivityWidget, EntryPointsWidget } from "./widgets";
 import { DashboardQuickLinks } from "./widgets/links";
 import { ManageWidgetsModal } from "./widgets/manage";
 
@@ -33,6 +33,16 @@ export const HOME_WIDGETS_LIST: {
     title: string;
   };
 } = {
+  // [ours: workspace-brand] ENG-290 — entry_points first in the registry so
+  // when a workspace enables it (via home_widget_defaults), it consistently
+  // renders at the top of the Home page above any other widgets. The seed
+  // pass pins its sort_order to 2000 (above the 1000-N range used for
+  // upstream keys) to enforce visual priority.
+  entry_points: {
+    component: EntryPointsWidget,
+    fullWidth: true,
+    title: "home.entry_points.title",
+  },
   quick_links: {
     component: DashboardQuickLinks,
     fullWidth: false,

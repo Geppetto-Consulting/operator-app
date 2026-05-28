@@ -5,5 +5,8 @@
  */
 
 export * from "./empty-states";
+// [ours: workspace-brand] ENG-290 — entry_points widget (curated landing
+// cards for demo workspaces).
+export * from "./entry-points";
 export * from "./loaders";
 export * from "./recents";

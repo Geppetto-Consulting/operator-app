@@ -143,6 +143,24 @@ class Workspace(BaseModel):
     # packages/constants/src/brand.ts).
     brand_color = models.CharField(max_length=64, null=True, blank=True)
     brand_name_override = models.CharField(max_length=255, null=True, blank=True)
+    # [ours: workspace-brand] Operator fork — ENG-290. Per-workspace overrides
+    # for the workspace Home page's widget defaults. Empty dict (the default)
+    # falls back to Plane's stock behaviour (quick_links / recents /
+    # my_stickies enabled for a new user, quick_tutorial + new_at_plane
+    # skipped at the view layer).
+    #
+    # Populated dict overrides:
+    #   {
+    #     "<widget_key>": {"is_enabled": bool, ...widget-specific config},
+    #     ...
+    #   }
+    #
+    # The seed pass in WorkspaceHomePreferenceViewSet reads this when creating
+    # a missing per-user preference row, and the entry_points widget reads its
+    # `cards` list from `home_widget_defaults["entry_points"]["cards"]` at
+    # render time. Demo workspaces (sentio / gordons / stirlight) use this to
+    # default to entry_points-only Home.
+    home_widget_defaults = models.JSONField(blank=True, default=dict)
 
     def __str__(self):
         """Return name of the Workspace"""
@@ -386,6 +404,11 @@ class WorkspaceHomePreference(BaseModel):
         MY_STICKIES = "my_stickies", "My Stickies"
         NEW_AT_PLANE = "new_at_plane", "New at Plane"
         QUICK_TUTORIAL = "quick_tutorial", "Quick Tutorial"
+        # [ours: workspace-brand] Operator fork — ENG-290. Curated entry-point
+        # cards for the workspace Home. Populated via Workspace.home_widget_defaults
+        # so demo workspaces (sentio / gordons / stirlight) can replace Plane's
+        # stock noise with a single "pick where to start" row.
+        ENTRY_POINTS = "entry_points", "Entry Points"
 
     workspace = models.ForeignKey(
         "db.Workspace",
