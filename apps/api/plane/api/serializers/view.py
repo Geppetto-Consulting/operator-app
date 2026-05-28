@@ -18,6 +18,17 @@ class IssueViewAPISerializer(BaseSerializer):
 
     The model's `save()` derives `query` from `filters` automatically, so we
     do not duplicate that work here.
+
+    [ours: api] ENG-264 — `rich_filters` is exposed as a writable JSON field.
+    The web UI reads `rich_filters` directly (no fallback to `filters`), so
+    public REST callers must be able to set it for an API-created View to
+    actually filter issues. The model's save() does NOT populate
+    `rich_filters` from `filters` — that conversion only ran once in
+    migration 0107_migrate_filters_to_rich_filters. Callers (operator MCP,
+    etc.) construct the rich_filters payload using the converter's output
+    shape (see plane.utils.filters.converters.LegacyToRichFiltersConverter);
+    we accept it as opaque JSON here (defaults to {} per the model column
+    default).
     """
 
     class Meta:
@@ -27,6 +38,7 @@ class IssueViewAPISerializer(BaseSerializer):
             "name",
             "description",
             "filters",
+            "rich_filters",
             "display_filters",
             "display_properties",
             "access",
