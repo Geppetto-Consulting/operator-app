@@ -176,7 +176,22 @@ export const CustomLinkExtension = Mark.create<LinkOptions, CustomLinkStorage>({
     if (href.startsWith("javascript:") || href.startsWith("data:") || href.startsWith("vbscript:")) {
       return ["a", mergeAttributes(this.options.HTMLAttributes, { ...HTMLAttributes, href: "" }), 0];
     }
-    return ["a", mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
+    // [ours: ui-internal-links] Internal links — relative app paths ("/<ws>/...")
+    // and in-page anchors ("#...") — navigate in the SAME tab so the user can move
+    // forward/back through the workspace instead of accreting a new tab per click.
+    // Only genuinely external links keep target=_blank. The clickHandler plugin
+    // reads the rendered anchor's `target`, so overriding it here fixes both the
+    // static read-view render AND the in-editor click behaviour with one change.
+    const isInternalHref = href.startsWith("/") || href.startsWith("#");
+    return [
+      "a",
+      mergeAttributes(
+        this.options.HTMLAttributes,
+        HTMLAttributes,
+        isInternalHref ? { target: "_self", rel: "noopener" } : {}
+      ),
+      0,
+    ];
   },
 
   addCommands() {
