@@ -13,7 +13,6 @@ import {
   IntakeIcon,
   ModuleIcon,
   PageIcon,
-  ViewsIcon,
   WorkItemsIcon,
 } from "@plane/propel/icons";
 import type { EUserProjectRoles, IPartialProject } from "@plane/types";
@@ -87,22 +86,10 @@ export const useNavigationItems = ({
         shouldRender: !!project?.issue_views_view,
         sortOrder: 4,
       },
-      {
-        // [ours: views] ENG-276 — restore the upstream saved-Views list as its
-        // own sidebar tab so cold prospects can discover it after closing the
-        // Start-here page. The route lives at /views/list/ (see routes/core.ts
-        // and app/(all)/.../views/list/page.tsx). Same `issue_views_view` flag
-        // as the Dashboard above — both light up together when the feature is
-        // enabled, both stay hidden when it isn't.
-        i18n_key: "sidebar.views_list",
-        key: "views_list",
-        name: "Views",
-        href: `/${wsSlug}/projects/${pId}/views/list`,
-        icon: ViewsIcon,
-        access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
-        shouldRender: !!project?.issue_views_view,
-        sortOrder: 5,
-      },
+      // [ours: views] ENG-298 — hide saved-Views tab-strip entry across all
+      // projects in all workspaces. Dashboard above stays (it surfaces the
+      // views_list widget when configured). Route /views/list/ remains
+      // reachable by direct URL for admin/dev use.
       {
         i18n_key: "sidebar.pages",
         key: "pages",

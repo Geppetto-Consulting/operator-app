@@ -12,7 +12,6 @@ import {
   IntakeIcon,
   ModuleIcon,
   PageIcon,
-  ViewsIcon,
   WorkItemsIcon,
 } from "@plane/propel/icons";
 // components
@@ -72,17 +71,9 @@ export const getProjectFeatureNavigation = (
     shouldRender: project.issue_views_view,
     sortOrder: 4,
   },
-  {
-    // [ours: views] ENG-276 — restored saved-Views list at /views/list/.
-    i18n_key: "sidebar.views_list",
-    key: EProjectFeatureKey.VIEWS_LIST,
-    name: "Views",
-    href: `/${workspaceSlug}/projects/${projectId}/views/list`,
-    icon: ViewsIcon,
-    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
-    shouldRender: project.issue_views_view,
-    sortOrder: 5,
-  },
+  // [ours: views] ENG-298 — hide saved-Views breadcrumb entry across all projects.
+  // EProjectFeatureKey.VIEWS_LIST stays in @plane/constants (route file still
+  // serves /views/list/ by direct URL for admin/dev use).
   {
     i18n_key: "sidebar.pages",
     key: EProjectFeatureKey.PAGES,

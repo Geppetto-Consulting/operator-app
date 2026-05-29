@@ -16,7 +16,6 @@ import {
   IntakeIcon,
   ModuleIcon,
   PageIcon,
-  ViewsIcon,
   WorkItemsIcon,
 } from "@plane/propel/icons";
 import type { EUserProjectRoles } from "@plane/types";
@@ -125,19 +124,10 @@ export const ProjectNavigation = observer(function ProjectNavigation(props: TPro
         shouldRender: project?.issue_views_view ?? false,
         sortOrder: 4,
       },
-      {
-        // [ours: views] ENG-276 — restore upstream saved-Views list as its
-        // own sidebar entry pointing at /views/list/. Same `issue_views_view`
-        // gate so it co-lights / co-hides with Dashboard above.
-        i18n_key: "sidebar.views_list",
-        key: "views_list",
-        name: "Views",
-        href: `/${wsSlug}/projects/${pId}/views/list`,
-        icon: ViewsIcon,
-        access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
-        shouldRender: project?.issue_views_view ?? false,
-        sortOrder: 5,
-      },
+      // [ours: views] ENG-298 — hide saved-Views list sidebar tab across all
+      // projects in all workspaces. Dashboard tab above stays (it surfaces the
+      // views_list widget when configured). Route /views/list/ remains reachable
+      // by direct URL for admin/dev use.
       {
         i18n_key: "sidebar.pages",
         key: "pages",
