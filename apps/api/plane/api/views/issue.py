@@ -2555,8 +2555,12 @@ class IssueLinkedPagesAPIEndpoint(BaseAPIView):
     ``page_transaction`` Celery task on page save.
 
     Permission shape mirrors the rest of the public Pages / Issues API
-    (``ProjectEntityPermission`` + x-api-key). Scoped to the page set that is
-    attached to the same project as the issue.
+    (``ProjectEntityPermission`` + x-api-key). Scoped to the workspace — any
+    Page in the same workspace that mentions the issue is returned, regardless
+    of which project the Page itself lives in. The operator entity↔output model
+    is cross-project by design (entity in PIPE/REL/GRANT, output Page in
+    Briefings), so project-scoping the reverse lookup hid the very rows
+    callers needed.
     """
 
     model = Page
@@ -2566,7 +2570,6 @@ class IssueLinkedPagesAPIEndpoint(BaseAPIView):
 
     def get_queryset(self):
         slug = self.kwargs.get("slug")
-        project_id = self.kwargs.get("project_id")
         issue_id = self.kwargs.get("issue_id")
 
         # PageLog rows scoped to the workspace -> page ids that mention the issue
@@ -2579,9 +2582,7 @@ class IssueLinkedPagesAPIEndpoint(BaseAPIView):
         return (
             Page.objects.filter(pk__in=page_ids)
                 .filter(workspace__slug=slug)
-                # Only pages attached to the same project as the issue — keeps
-                # cross-project mention noise out of the reverse lookup.
-                .filter(projects__id=project_id)
+                # Workspace-scoped: cross-project mentions are the point, not noise.
                 .filter(project_pages__deleted_at__isnull=True)
                 .select_related("workspace")
                 .order_by("-created_at")
