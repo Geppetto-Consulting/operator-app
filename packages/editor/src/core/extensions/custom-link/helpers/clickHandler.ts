@@ -40,6 +40,22 @@ export function clickHandler(options: ClickHandlerOptions): Plugin {
         const target = link?.target ?? attrs.target;
 
         if (link && href) {
+          // [ours: ui-readonly-link-nav] On read-only pages (locked / viewer with no
+          // edit rights) a link click must NAVIGATE, not select for editing. The
+          // default window.open(href, "_self") is unreliable for in-app navigation
+          // (it can be a no-op, leaving the hover link-popover showing and the user
+          // stuck), so drive the location directly for same-tab links and keep a real
+          // new tab only for genuinely external (target=_blank) links. In editable
+          // mode we preserve the original behaviour so link editing still works.
+          if (!view.editable) {
+            if (target && target !== "_self") {
+              window.open(href, target, "noopener");
+            } else {
+              window.location.href = href;
+            }
+            return true;
+          }
+
           window.open(href, target);
 
           return true;
