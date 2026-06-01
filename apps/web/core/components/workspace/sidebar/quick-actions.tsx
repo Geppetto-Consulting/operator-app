@@ -20,6 +20,8 @@ import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
 import useLocalStorage from "@/hooks/use-local-storage";
+// [ours: demo-chrome] ENG-298 — hide the "New work item" quick button in prospect demos
+import { isDemoWorkspace } from "@/constants/demo-workspaces";
 
 export const SidebarQuickActions = observer(function SidebarQuickActions() {
   const { t } = useTranslation();
@@ -45,6 +47,10 @@ export const SidebarQuickActions = observer(function SidebarQuickActions() {
   );
   const disabled = joinedProjectIds.length === 0 || !canCreateIssue;
   const workspaceDraftIssue = workspaceSlug ? (storedValue?.[workspaceSlug] ?? undefined) : undefined;
+
+  // [ours: demo-chrome] ENG-298 — prospect demos are read-only showcases; a
+  // "New work item" creation button reads as dev tooling, so hide it entirely.
+  if (isDemoWorkspace(workspaceSlug)) return null;
 
   const handleMouseEnter = () => {
     // if enter before time out clear the timeout

@@ -6,6 +6,7 @@
 
 import React, { useMemo } from "react";
 import { observer } from "mobx-react";
+import { useParams } from "next/navigation";
 import { Ellipsis } from "lucide-react";
 import { Disclosure, Transition } from "@headlessui/react";
 // plane imports
@@ -29,8 +30,12 @@ import {
 } from "@/hooks/use-navigation-preferences";
 // plane-web imports
 import { SidebarItem } from "@/plane-web/components/workspace/sidebar/sidebar-item";
+// [ours: demo-chrome] ENG-298 — suppress personal PM nav (Your work / Drafts / Stickies) in prospect demos
+import { isDemoWorkspace } from "@/constants/demo-workspaces";
 
 export const SidebarMenuItems = observer(function SidebarMenuItems() {
+  const { workspaceSlug } = useParams();
+  const demo = isDemoWorkspace(workspaceSlug);
   // routers
   const { setValue: toggleWorkspaceMenu, storedValue: isWorkspaceMenuOpen } = useLocalStorage<boolean>(
     "is_workspace_menu_open",
@@ -54,25 +59,30 @@ export const SidebarMenuItems = observer(function SidebarMenuItems() {
     const items = [...WORKSPACE_SIDEBAR_STATIC_NAVIGATION_ITEMS_LINKS];
     const personalItems: Array<(typeof items)[0] & { sort_order: number }> = [];
 
-    // Add personal items based on preferences with their sort_order
-    const stickiesItem = WORKSPACE_SIDEBAR_STATIC_NAVIGATION_ITEMS["stickies"];
-    if (personalPreferences.items.stickies?.enabled && stickiesItem) {
-      personalItems.push({
-        ...stickiesItem,
-        sort_order: personalPreferences.items.stickies.sort_order,
-      });
-    }
-    if (personalPreferences.items.your_work?.enabled && WORKSPACE_SIDEBAR_STATIC_NAVIGATION_ITEMS["your-work"]) {
-      personalItems.push({
-        ...WORKSPACE_SIDEBAR_STATIC_NAVIGATION_ITEMS["your-work"],
-        sort_order: personalPreferences.items.your_work.sort_order,
-      });
-    }
-    if (personalPreferences.items.drafts?.enabled && WORKSPACE_SIDEBAR_STATIC_NAVIGATION_ITEMS["drafts"]) {
-      personalItems.push({
-        ...WORKSPACE_SIDEBAR_STATIC_NAVIGATION_ITEMS["drafts"],
-        sort_order: personalPreferences.items.drafts.sort_order,
-      });
+    // [ours: demo-chrome] ENG-298 — in prospect demos, suppress the personal PM nav
+    // (Stickies / Your work / Drafts); they expose Plane's individual work-item tooling
+    // that a prospect has no use for. Static product nav (Home, Pages) is unaffected.
+    if (!demo) {
+      // Add personal items based on preferences with their sort_order
+      const stickiesItem = WORKSPACE_SIDEBAR_STATIC_NAVIGATION_ITEMS["stickies"];
+      if (personalPreferences.items.stickies?.enabled && stickiesItem) {
+        personalItems.push({
+          ...stickiesItem,
+          sort_order: personalPreferences.items.stickies.sort_order,
+        });
+      }
+      if (personalPreferences.items.your_work?.enabled && WORKSPACE_SIDEBAR_STATIC_NAVIGATION_ITEMS["your-work"]) {
+        personalItems.push({
+          ...WORKSPACE_SIDEBAR_STATIC_NAVIGATION_ITEMS["your-work"],
+          sort_order: personalPreferences.items.your_work.sort_order,
+        });
+      }
+      if (personalPreferences.items.drafts?.enabled && WORKSPACE_SIDEBAR_STATIC_NAVIGATION_ITEMS["drafts"]) {
+        personalItems.push({
+          ...WORKSPACE_SIDEBAR_STATIC_NAVIGATION_ITEMS["drafts"],
+          sort_order: personalPreferences.items.drafts.sort_order,
+        });
+      }
     }
 
     // Sort personal items by sort_order
@@ -80,7 +90,7 @@ export const SidebarMenuItems = observer(function SidebarMenuItems() {
 
     // Merge static items with sorted personal items
     return [...items, ...personalItems];
-  }, [personalPreferences]);
+  }, [personalPreferences, demo]);
 
   const sortedNavigationItems = useMemo(
     () =>
