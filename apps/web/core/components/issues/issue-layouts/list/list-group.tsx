@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { observer } from "mobx-react";
+import { useParams } from "next/navigation";
 // plane imports
 import { DRAG_ALLOWED_GROUPS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
@@ -27,6 +28,8 @@ import { Row } from "@plane/ui";
 import { cn } from "@plane/utils";
 // components
 import { ListLoaderItemRow } from "@/components/ui/loader/layouts/list-layout-loader";
+// [ours: demo-chrome] ENG-298 — no inline quick-add row in prospect demos
+import { isDemoWorkspace } from "@/constants/demo-workspaces";
 // hooks
 import { useProjectState } from "@/hooks/store/use-project-state";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
@@ -106,6 +109,8 @@ export const ListGroup = observer(function ListGroup(props: Props) {
   const isExpanded = !collapsedGroups?.group_by.includes(group.id);
   const groupRef = useRef<HTMLDivElement | null>(null);
   const { t } = useTranslation();
+  // [ours: demo-chrome] ENG-298
+  const { workspaceSlug } = useParams();
   const projectState = useProjectState();
 
   const {
@@ -328,7 +333,8 @@ export const ListGroup = observer(function ListGroup(props: Props) {
             !disableIssueCreation &&
             !isGroupByCreatedBy &&
             !isCompletedCycle &&
-            !isWorkflowIssueCreationDisabled && (
+            !isWorkflowIssueCreationDisabled &&
+            !isDemoWorkspace(workspaceSlug) && (
               <div className="sticky bottom-0 z-[1] w-full flex-shrink-0">
                 <QuickAddIssueRoot
                   layout={EIssueLayoutTypes.LIST}

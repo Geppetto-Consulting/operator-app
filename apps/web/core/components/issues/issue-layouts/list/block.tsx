@@ -21,6 +21,8 @@ import { Spinner, ControlLink, Row } from "@plane/ui";
 import { cn, generateWorkItemLink } from "@plane/utils";
 // components
 import { MultipleSelectEntityAction } from "@/components/core/multiple-select";
+// [ours: demo-chrome] ENG-298 — no per-row edit/delete menu in prospect demos
+import { isDemoWorkspace } from "@/constants/demo-workspaces";
 import { IssueProperties } from "@/components/issues/issue-layouts/properties";
 // helpers
 // hooks
@@ -294,7 +296,7 @@ export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
               </WithDisplayPropertiesHOC>
             )}
           </div>
-          {!issue?.tempId && (
+          {!issue?.tempId && !isDemoWorkspace(workspaceSlug) && (
             <div
               className={cn("block rounded-sm border border-strong", {
                 "md:hidden": isSidebarCollapsed,
@@ -320,21 +322,23 @@ export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
                 activeLayout="List"
                 isEpic={isEpic}
               />
-              <div
-                className={cn("hidden", {
-                  "md:flex": isSidebarCollapsed,
-                  "lg:flex": !isSidebarCollapsed,
-                })}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
-              >
-                {quickActions({
-                  issue,
-                  parentRef: issueRef,
-                })}
-              </div>
+              {!isDemoWorkspace(workspaceSlug) && (
+                <div
+                  className={cn("hidden", {
+                    "md:flex": isSidebarCollapsed,
+                    "lg:flex": !isSidebarCollapsed,
+                  })}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                >
+                  {quickActions({
+                    issue,
+                    parentRef: issueRef,
+                  })}
+                </div>
+              )}
             </>
           ) : (
             <div className="h-4 w-4">

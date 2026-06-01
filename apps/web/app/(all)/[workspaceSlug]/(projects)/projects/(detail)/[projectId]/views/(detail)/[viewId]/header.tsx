@@ -24,6 +24,8 @@ import { EIssuesStoreType, EViewAccess, EIssueLayoutTypes } from "@plane/types";
 import { Breadcrumbs, Header, BreadcrumbNavigationSearchDropdown } from "@plane/ui";
 // components
 import { BreadcrumbLink } from "@/components/common/breadcrumb-link";
+// [ours: demo-chrome] ENG-298 — clean read-only saved views in prospect demos
+import { isDemoWorkspace } from "@/constants/demo-workspaces";
 import { SwitcherIcon, SwitcherLabel } from "@/components/common/switcher-label";
 import { DisplayFiltersSelection, FiltersDropdown, LayoutSelection } from "@/components/issues/issue-layouts/filters";
 import { ViewQuickActions } from "@/components/views/quick-actions";
@@ -45,6 +47,10 @@ export const ProjectViewIssuesHeader = observer(function ProjectViewIssuesHeader
   const router = useAppRouter();
   const { workspaceSlug, projectId, viewId: routerViewId } = useParams();
   const viewId = routerViewId ? routerViewId.toString() : undefined;
+  // [ours: demo-chrome] ENG-298 — prospect demos show saved views as clean read-only
+  // lists: suppress the whole toolbar (layout switcher, Filters, Display, Add work item,
+  // view edit/delete menu).
+  const demoChrome = isDemoWorkspace(workspaceSlug);
   // store hooks
   const {
     issuesFilter: { issueFilters, updateFilters },
@@ -165,6 +171,7 @@ export const ProjectViewIssuesHeader = observer(function ProjectViewIssuesHeader
         )}
       </Header.LeftItem>
       <Header.RightItem className="items-center">
+        {!demoChrome && (
         <>
           {!viewDetails.is_locked && (
             <LayoutSelection
@@ -196,7 +203,8 @@ export const ProjectViewIssuesHeader = observer(function ProjectViewIssuesHeader
             </FiltersDropdown>
           )}
         </>
-        {canUserCreateIssue && (
+        )}
+        {canUserCreateIssue && !demoChrome && (
           <Button
             variant="primary"
             size="lg"
@@ -208,15 +216,17 @@ export const ProjectViewIssuesHeader = observer(function ProjectViewIssuesHeader
             Add work item
           </Button>
         )}
-        <div className="hidden md:block">
-          <ViewQuickActions
-            parentRef={parentRef}
-            customClassName="flex-shrink-0 flex items-center justify-center size-[26px] bg-layer-1/70 rounded-sm"
-            projectId={projectId.toString()}
-            view={viewDetails}
-            workspaceSlug={workspaceSlug.toString()}
-          />
-        </div>
+        {!demoChrome && (
+          <div className="hidden md:block">
+            <ViewQuickActions
+              parentRef={parentRef}
+              customClassName="flex-shrink-0 flex items-center justify-center size-[26px] bg-layer-1/70 rounded-sm"
+              projectId={projectId.toString()}
+              view={viewDetails}
+              workspaceSlug={workspaceSlug.toString()}
+            />
+          </div>
+        )}
       </Header.RightItem>
     </Header>
   );

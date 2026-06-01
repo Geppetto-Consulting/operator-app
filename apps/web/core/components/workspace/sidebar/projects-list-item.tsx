@@ -116,7 +116,7 @@ export const SidebarProjectsListItem = observer(function SidebarProjectsListItem
   // the Dashboard (/views) rather than the raw issue board, unless the user has an
   // explicit saved tab preference. Keeps prospects out of dev tooling by default.
   const demoDefaultTabKey =
-    isDemoWorkspace(workspaceSlug) && !defaultTabKey && availableTabKeys.includes("views")
+    isDemoWorkspace(workspaceSlug) && availableTabKeys.includes("views")
       ? "views"
       : validatedDefaultTabKey;
   const defaultTabUrl = project ? getTabUrl(workspaceSlug.toString(), project.id, demoDefaultTabKey) : "";

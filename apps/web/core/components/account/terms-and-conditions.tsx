@@ -13,9 +13,10 @@ interface TermsAndConditionsProps {
 }
 
 // Constants for better maintainability
+// [ours: brand] ENG-298 — white-label: legal links point to Promptable, not plane.so
 const LEGAL_LINKS = {
-  termsOfService: "https://plane.so/legals/terms-and-conditions",
-  privacyPolicy: "https://plane.so/legals/privacy-policy",
+  termsOfService: "https://promptable.co.uk/legal/terms",
+  privacyPolicy: "https://promptable.co.uk/legal/privacy",
 } as const;
 
 const MESSAGES = {
