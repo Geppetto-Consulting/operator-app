@@ -33,6 +33,8 @@ import { NameDescriptionUpdateStatus } from "../issue-update-status";
 import { PeekOverviewProperties } from "../peek-overview/properties";
 import { IssueTitleInput } from "../title-input";
 import { IssueActivity } from "./issue-activity";
+// [ours: demo-chrome] ENG-298 — hide the activity log (label/state narration) in prospect demos
+import { isDemoWorkspace } from "@/constants/demo-workspaces";
 import { IssueParentDetail } from "./parent";
 import { IssueReaction } from "./reactions";
 import type { TIssueOperations } from "./root";
@@ -206,7 +208,9 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
         />
       )}
 
-      <IssueActivity workspaceSlug={workspaceSlug} projectId={projectId} issueId={issueId} disabled={isArchived} />
+      {!isDemoWorkspace(workspaceSlug) && (
+        <IssueActivity workspaceSlug={workspaceSlug} projectId={projectId} issueId={issueId} disabled={isArchived} />
+      )}
     </>
   );
 });

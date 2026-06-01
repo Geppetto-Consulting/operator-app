@@ -7,6 +7,8 @@
 import { useRef, useState } from "react";
 import { observer } from "mobx-react";
 import { createPortal } from "react-dom";
+// [ours: demo-chrome] ENG-298 — hide the activity log (label/state narration) in prospect demos
+import { isDemoWorkspace } from "@/constants/demo-workspaces";
 // plane imports
 import type { EditorRefApi } from "@plane/editor";
 import type { TNameDescriptionLoader } from "@plane/types";
@@ -205,12 +207,14 @@ export const IssueView = observer(function IssueView(props: IIssueView) {
                       disabled={disabled || is_archived}
                     />
 
-                    <IssueActivity
-                      workspaceSlug={workspaceSlug}
-                      projectId={projectId}
-                      issueId={issueId}
-                      disabled={is_archived}
-                    />
+                    {!isDemoWorkspace(workspaceSlug) && (
+                      <IssueActivity
+                        workspaceSlug={workspaceSlug}
+                        projectId={projectId}
+                        issueId={issueId}
+                        disabled={is_archived}
+                      />
+                    )}
                   </div>
                 ) : (
                   <div className="vertical-scrollbar flex h-full w-full overflow-auto">
@@ -238,12 +242,14 @@ export const IssueView = observer(function IssueView(props: IIssueView) {
                           />
                         </div>
 
-                        <IssueActivity
-                          workspaceSlug={workspaceSlug}
-                          projectId={projectId}
-                          issueId={issueId}
-                          disabled={is_archived}
-                        />
+                        {!isDemoWorkspace(workspaceSlug) && (
+                          <IssueActivity
+                            workspaceSlug={workspaceSlug}
+                            projectId={projectId}
+                            issueId={issueId}
+                            disabled={is_archived}
+                          />
+                        )}
                       </div>
                     </div>
                     <div

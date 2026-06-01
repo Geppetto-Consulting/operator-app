@@ -4,9 +4,9 @@
  * See the LICENSE file for details.
  */
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { observer } from "mobx-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 // Plane imports
 import useSWR from "swr";
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
@@ -20,6 +20,8 @@ import { useIssues } from "@/hooks/store/use-issues";
 import { useUserPermissions } from "@/hooks/store/user";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { useWorkItemProperties } from "@/plane-web/hooks/use-issue-properties";
+// [ours: demo-chrome] ENG-298 — entity rows on the intelligence desks resolve to their canonical Page
+import { isDemoEntityProject, canonicalPageHrefFromDescription } from "@/constants/demo-workspaces";
 // local imports
 import type { TIssueOperations } from "../issue-detail";
 import { IssueView } from "./view";
@@ -40,10 +42,11 @@ export const IssuePeekOverview = observer(function IssuePeekOverview(props: IWor
   const {
     issues: { restoreIssue },
   } = useIssues(EIssuesStoreType.ARCHIVED);
+  const router = useRouter();
   const {
     peekIssue,
     setPeekIssue,
-    issue: { fetchIssue },
+    issue: { fetchIssue, getIssueById },
     fetchActivities,
   } = useIssueDetail();
   const issueStoreType = useIssueStoreType();
@@ -225,7 +228,23 @@ export const IssuePeekOverview = observer(function IssuePeekOverview(props: IWor
     }
   );
 
+  // [ours: demo-chrome] ENG-298 — for entity-substrate projects on the intelligence desks,
+  // resolve the peek straight to the entity's canonical "what we know" Page instead of
+  // showing a bare work-item panel. Falls through to the normal peek if no page link is found.
+  const peekIssueData = peekIssue?.issueId ? getIssueById(peekIssue.issueId) : undefined;
+  const demoEntityPageHref =
+    peekIssue?.projectId && isDemoEntityProject(peekIssue.projectId)
+      ? canonicalPageHrefFromDescription(peekIssueData?.description_html)
+      : null;
+  useEffect(() => {
+    if (isLoading || !demoEntityPageHref) return;
+    setPeekIssue(undefined);
+    router.push(demoEntityPageHref);
+  }, [isLoading, demoEntityPageHref, router, setPeekIssue]);
+
   if (!peekIssue?.workspaceSlug || !peekIssue?.projectId || !peekIssue?.issueId) return <></>;
+  // while a demo entity peek is resolving to its page, render nothing (avoids a chrome flash)
+  if (demoEntityPageHref) return <></>;
 
   // Check if issue is editable, based on user role
   const isEditable = allowPermissions(
