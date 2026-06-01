@@ -29,6 +29,8 @@ import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
 // [ours: terminology] Operator fork — per-project work-item label override (ENG-119)
 import { useProjectTerminology } from "@/hooks/use-project-terminology";
+// [ours: demo-chrome] ENG-298 — suppress the raw "Work items" board tab in prospect demos
+import { isDemoWorkspace } from "@/constants/demo-workspaces";
 
 export type TNavigationItem = {
   name: string;
@@ -88,7 +90,10 @@ export const ProjectNavigation = observer(function ProjectNavigation(props: TPro
         href: `/${wsSlug}/projects/${pId}/issues`,
         icon: WorkItemsIcon,
         access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
-        shouldRender: true,
+        // [ours: demo-chrome] ENG-298 — hide the raw issue board tab in prospect demos.
+        // Work items stay reachable via the Dashboard + inline links; only the
+        // dev-tooling board listing is suppressed.
+        shouldRender: !isDemoWorkspace(wsSlug),
         sortOrder: 1,
       },
       {

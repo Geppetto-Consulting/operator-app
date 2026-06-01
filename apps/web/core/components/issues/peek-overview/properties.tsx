@@ -30,6 +30,8 @@ import { MemberDropdown } from "@/components/dropdowns/member/dropdown";
 import { PriorityDropdown } from "@/components/dropdowns/priority";
 import { StateDropdown } from "@/components/dropdowns/state/dropdown";
 import { SidebarPropertyListItem } from "@/components/common/layout/sidebar/property-list-item";
+// [ours: demo-chrome] ENG-298 — suppress label-chip wall in prospect demos
+import { isDemoWorkspace } from "@/constants/demo-workspaces";
 // helpers
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useMember } from "@/hooks/store/use-member";
@@ -252,9 +254,13 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
           />
         </SidebarPropertyListItem>
 
-        <SidebarPropertyListItem icon={LabelPropertyIcon} label={t("common.labels")}>
-          <IssueLabel workspaceSlug={workspaceSlug} projectId={projectId} issueId={issueId} disabled={disabled} />
-        </SidebarPropertyListItem>
+        {/* [ours: demo-chrome] ENG-298 — hide the raw label-chip wall (internal routing
+            plumbing like type:*, agent:*, sic:*, cross-sell-max:*) in prospect demos. */}
+        {!isDemoWorkspace(workspaceSlug) && (
+          <SidebarPropertyListItem icon={LabelPropertyIcon} label={t("common.labels")}>
+            <IssueLabel workspaceSlug={workspaceSlug} projectId={projectId} issueId={issueId} disabled={disabled} />
+          </SidebarPropertyListItem>
+        )}
 
         <IssueWorklogProperty
           workspaceSlug={workspaceSlug}

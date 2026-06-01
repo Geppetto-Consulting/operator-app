@@ -28,6 +28,8 @@ import { CustomMenu, DropIndicator, DragHandle, ControlLink } from "@plane/ui";
 import { cn } from "@plane/utils";
 // components
 import { DEFAULT_TAB_KEY, getTabUrl } from "@/components/navigation/tab-navigation-utils";
+// [ours: demo-chrome] ENG-298 — prospect demos default project-click to the Dashboard
+import { isDemoWorkspace } from "@/constants/demo-workspaces";
 import { useTabPreferences } from "@/components/navigation/use-tab-preferences";
 import { LeaveProjectModal } from "@/components/project/leave-project-modal";
 import { PublishProjectModal } from "@/components/project/publish-project/modal";
@@ -110,7 +112,14 @@ export const SidebarProjectsListItem = observer(function SidebarProjectsListItem
   const defaultTabKey = tabPreferences.defaultTab;
   // Validate that the default tab is available
   const validatedDefaultTabKey = availableTabKeys.includes(defaultTabKey) ? defaultTabKey : DEFAULT_TAB_KEY;
-  const defaultTabUrl = project ? getTabUrl(workspaceSlug.toString(), project.id, validatedDefaultTabKey) : "";
+  // [ours: demo-chrome] ENG-298 — in prospect demos, clicking a project name lands on
+  // the Dashboard (/views) rather than the raw issue board, unless the user has an
+  // explicit saved tab preference. Keeps prospects out of dev tooling by default.
+  const demoDefaultTabKey =
+    isDemoWorkspace(workspaceSlug) && !defaultTabKey && availableTabKeys.includes("views")
+      ? "views"
+      : validatedDefaultTabKey;
+  const defaultTabUrl = project ? getTabUrl(workspaceSlug.toString(), project.id, demoDefaultTabKey) : "";
 
   // toggle project list open
   const setIsProjectListOpen = useCallback(

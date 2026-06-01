@@ -12,6 +12,8 @@ import { LinkIcon, ViewsIcon, RelationPropertyIcon } from "@plane/propel/icons";
 import type { TIssueServiceType, TWorkItemWidgets } from "@plane/types";
 // plane web imports
 import { WorkItemAdditionalWidgetActionButtons } from "@/plane-web/components/issues/issue-detail-widgets/action-buttons";
+// [ours: demo-chrome] ENG-298 — suppress PM action bar in prospect demos
+import { isDemoWorkspace } from "@/constants/demo-workspaces";
 // local imports
 import { IssueAttachmentActionButton } from "./attachments";
 import { IssueLinksActionButton } from "./links";
@@ -32,6 +34,10 @@ export function IssueDetailWidgetActionButtons(props: Props) {
   const { workspaceSlug, projectId, issueId, disabled, issueServiceType, hideWidgets } = props;
   // translation
   const { t } = useTranslation();
+
+  // [ours: demo-chrome] ENG-298 — hide the "Add sub-work item / relation / link / attach"
+  // PM action bar entirely in prospect demos; it reads as developer tooling.
+  if (isDemoWorkspace(workspaceSlug)) return null;
 
   return (
     <div className="flex flex-wrap items-center gap-2">

@@ -43,6 +43,8 @@ import { DateAlert } from "@/plane-web/components/issues/issue-details/sidebar/d
 import { TransferHopInfo } from "@/plane-web/components/issues/issue-details/sidebar/transfer-hop-info";
 import { IssueWorklogProperty } from "@/plane-web/components/issues/worklog/property";
 import { SidebarPropertyListItem } from "@/components/common/layout/sidebar/property-list-item";
+// [ours: demo-chrome] ENG-298 — suppress label-chip wall in prospect demos
+import { isDemoWorkspace } from "@/constants/demo-workspaces";
 import { IssueCycleSelect } from "./cycle-select";
 import { IssueLabel } from "./label";
 import { IssueLinkedPages } from "./linked-pages";
@@ -251,14 +253,18 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
               />
             </SidebarPropertyListItem>
 
-            <SidebarPropertyListItem icon={LabelPropertyIcon} label={t("common.labels")}>
-              <IssueLabel
-                workspaceSlug={workspaceSlug}
-                projectId={projectId}
-                issueId={issueId}
-                disabled={!isEditable}
-              />
-            </SidebarPropertyListItem>
+            {/* [ours: demo-chrome] ENG-298 — hide the raw label-chip wall (internal routing
+                plumbing like type:*, agent:*, sic:*, cross-sell-max:*) in prospect demos. */}
+            {!isDemoWorkspace(workspaceSlug) && (
+              <SidebarPropertyListItem icon={LabelPropertyIcon} label={t("common.labels")}>
+                <IssueLabel
+                  workspaceSlug={workspaceSlug}
+                  projectId={projectId}
+                  issueId={issueId}
+                  disabled={!isEditable}
+                />
+              </SidebarPropertyListItem>
+            )}
 
             <IssueWorklogProperty
               workspaceSlug={workspaceSlug}
