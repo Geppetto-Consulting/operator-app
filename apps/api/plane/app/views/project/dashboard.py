@@ -588,6 +588,18 @@ def _compute_pages_by_type(project, widget):
 
     limit_per_group = _coerce_int(widget.get("limit_per_group", 10), 10, lo=0, hi=100)
 
+    # [ours: dashboard-order] ENG-298 — honour an optional widget `order_by` so a
+    # dated list (e.g. weekly briefings "… week of 2026-05-22") can show newest-first
+    # via "-name". Defaults to "-updated_at" (prior behaviour). Allowlisted to avoid
+    # arbitrary ORM field injection.
+    _ALLOWED_ORDER = {
+        "name", "-name", "created_at", "-created_at",
+        "updated_at", "-updated_at", "sort_order", "-sort_order",
+    }
+    order_field = widget.get("order_by")
+    if order_field not in _ALLOWED_ORDER:
+        order_field = "-updated_at"
+
     # Workspace scope enforced — projects__id ties to the project's M2M.
     base = (
         Page.objects.filter(
@@ -595,7 +607,7 @@ def _compute_pages_by_type(project, widget):
             projects__id=target_project_id,
             archived_at__isnull=True,
         )
-        .order_by("-updated_at")
+        .order_by(order_field)
         .distinct()
     )
 
