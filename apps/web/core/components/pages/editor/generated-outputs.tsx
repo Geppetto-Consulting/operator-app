@@ -62,6 +62,38 @@ export const PageGeneratedOutputs = observer(function PageGeneratedOutputs({
     };
   }, [workspaceSlug, projectId, pageId]);
 
+  // [ours: demo-chrome] Hide the LEGACY static "Generated outputs" section that
+  // the entity-page template bakes into the editor body ("No linked outputs
+  // yet…") — this dynamic panel supersedes it. The editor renders a persisted
+  // Yjs doc, so the stale section can't be stripped from the HTML reliably;
+  // hide it in the DOM instead. Retries until the editor mounts, then stops.
+  useEffect(() => {
+    const hideStaticSection = (): boolean => {
+      const editor = document.querySelector(".editor-container") ?? document.querySelector(".ProseMirror");
+      if (!editor) return false;
+      const stale = Array.from(editor.querySelectorAll("h2")).find(
+        (h) => (h.textContent ?? "").trim() === "Generated outputs"
+      );
+      if (!stale) return false;
+      (stale as HTMLElement).style.display = "none";
+      let el = stale.nextElementSibling as HTMLElement | null;
+      while (el && !/^H[1-6]$/.test(el.tagName)) {
+        el.style.display = "none";
+        el = el.nextElementSibling as HTMLElement | null;
+      }
+      return true;
+    };
+    if (hideStaticSection()) return undefined;
+    const iv = setInterval(() => {
+      if (hideStaticSection()) clearInterval(iv);
+    }, 400);
+    const to = setTimeout(() => clearInterval(iv), 6000);
+    return () => {
+      clearInterval(iv);
+      clearTimeout(to);
+    };
+  }, [pageId, pages]);
+
   // Fail silent: never render anything if the lookup errored or is still loading.
   if (error || pages === null) return null;
 
