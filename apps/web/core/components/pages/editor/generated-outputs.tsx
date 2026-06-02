@@ -66,33 +66,32 @@ export const PageGeneratedOutputs = observer(function PageGeneratedOutputs({
   // the entity-page template bakes into the editor body ("No linked outputs
   // yet…") — this dynamic panel supersedes it. The editor renders a persisted
   // Yjs doc, so the stale section can't be stripped from the HTML reliably;
-  // hide it in the DOM instead. Retries until the editor mounts, then stops.
+  // hide it in the DOM instead. The editor materialises its content over the
+  // collab websocket at variable (often >6s) timing and can re-render, so we
+  // re-apply on a short interval for a window rather than once. Scoped to h2s
+  // inside an editor (.ProseMirror/.tiptap) — this panel's own header is an h3.
   useEffect(() => {
-    const hideStaticSection = (): boolean => {
-      const editor = document.querySelector(".editor-container") ?? document.querySelector(".ProseMirror");
-      if (!editor) return false;
-      const stale = Array.from(editor.querySelectorAll("h2")).find(
-        (h) => (h.textContent ?? "").trim() === "Generated outputs"
+    const hideStaticSection = () => {
+      const stale = Array.from(document.querySelectorAll("h2")).filter(
+        (h) => (h.textContent ?? "").trim() === "Generated outputs" && h.closest(".ProseMirror, .tiptap")
       );
-      if (!stale) return false;
-      (stale as HTMLElement).style.display = "none";
-      let el = stale.nextElementSibling as HTMLElement | null;
-      while (el && !/^H[1-6]$/.test(el.tagName)) {
-        el.style.display = "none";
-        el = el.nextElementSibling as HTMLElement | null;
+      for (const h of stale) {
+        (h as HTMLElement).style.display = "none";
+        let el = h.nextElementSibling as HTMLElement | null;
+        while (el && !/^H[1-6]$/.test(el.tagName)) {
+          el.style.display = "none";
+          el = el.nextElementSibling as HTMLElement | null;
+        }
       }
-      return true;
     };
-    if (hideStaticSection()) return undefined;
-    const iv = setInterval(() => {
-      if (hideStaticSection()) clearInterval(iv);
-    }, 400);
-    const to = setTimeout(() => clearInterval(iv), 6000);
+    hideStaticSection();
+    const iv = setInterval(hideStaticSection, 500);
+    const to = setTimeout(() => clearInterval(iv), 30000);
     return () => {
       clearInterval(iv);
       clearTimeout(to);
     };
-  }, [pageId, pages]);
+  }, [pageId]);
 
   // Fail silent: never render anything if the lookup errored or is still loading.
   if (error || pages === null) return null;
