@@ -25,6 +25,8 @@ import { ERowVariant, Row } from "@plane/ui";
 import { cn, generateRandomColor, hslToHex } from "@plane/utils";
 // components
 import { EditorMentionsRoot } from "@/components/editor/embeds/mentions";
+// constants
+import { isDemoWorkspace } from "@/constants/demo-workspaces";
 // hooks
 import { useEditorMention } from "@/hooks/editor";
 import { useMember } from "@/hooks/store/use-member";
@@ -43,6 +45,7 @@ import { useEditorFlagging } from "@/plane-web/hooks/use-editor-flagging";
 import type { TPageInstance } from "@/store/pages/base-page";
 // local imports
 import { PageContentLoader } from "../loaders/page-content-loader";
+import { PageGeneratedOutputs } from "./generated-outputs";
 import { PageEditorHeaderRoot } from "./header";
 import { PageContentBrowser } from "./summary";
 
@@ -297,6 +300,15 @@ export const PageEditorBody = observer(function PageEditorBody(props: Props) {
             extendedEditorProps={extendedEditorProps}
             isFetchingFallbackBinary={isFetchingFallbackBinary}
           />
+          {/* [ours: demo-chrome] Live "Generated outputs" panel on entity
+              ("— what we know") Pages in the prospect-facing demo workspaces. */}
+          {isDemoWorkspace(workspaceSlug) &&
+            !!projectId &&
+            (page?.name ?? "").trim().endsWith("— what we know") && (
+              <div className={blockWidthClassName}>
+                <PageGeneratedOutputs workspaceSlug={workspaceSlug} projectId={projectId} pageId={page.id} />
+              </div>
+            )}
         </div>
       </div>
     </Row>

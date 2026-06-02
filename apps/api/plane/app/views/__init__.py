@@ -180,6 +180,8 @@ from .page.base import (
 )
 from .page.version import PageVersionEndpoint
 
+from .page.sibling_outputs import PageSiblingOutputsEndpoint
+
 from .search.base import GlobalSearchEndpoint, SearchEndpoint
 from .search.issue import IssueSearchEndpoint
 

@@ -11,6 +11,7 @@ from plane.app.views import (
     PagesDescriptionViewSet,
     PageVersionEndpoint,
     PageDuplicateEndpoint,
+    PageSiblingOutputsEndpoint,
 )
 
 urlpatterns = [
@@ -72,5 +73,11 @@ urlpatterns = [
         "workspaces/<str:slug>/projects/<uuid:project_id>/pages/<uuid:page_id>/duplicate/",
         PageDuplicateEndpoint.as_view(),
         name="page-duplicate",
+    ),
+    # sibling outputs (reverse-lookup: other pages mentioning the same beads)
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/pages/<uuid:page_id>/sibling-outputs/",
+        PageSiblingOutputsEndpoint.as_view(),
+        name="page-sibling-outputs",
     ),
 ]

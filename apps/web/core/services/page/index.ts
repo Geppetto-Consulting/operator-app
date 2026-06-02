@@ -4,5 +4,6 @@
  * See the LICENSE file for details.
  */
 
+export * from "./page_sibling_outputs.service";
 export * from "./project-page-version.service";
 export * from "./project-page.service";
