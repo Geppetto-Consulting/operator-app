@@ -28,10 +28,10 @@ const pageSiblingOutputsService = new PageSiblingOutputsService();
 /**
  * [ours: demo-chrome] Renders the "Generated outputs" panel beneath an entity
  * ("— what we know") Page on the prospect-facing demo desks. Lists the docs
- * produced about the same entity — assessments, briefings — by reverse-walking
- * the PageLog substrate: any other page that mentions one of the beads this
- * page mentions is a sibling output. Queried at render-time; no editor/Yjs
- * writes. Errors fail silent so a flaky lookup never breaks the page.
+ * produced about the same entity — assessments, briefings — resolved at
+ * render-time from the doc naming convention ("<DocType> — <Entity>"), so new
+ * generations appear the instant they land with no editor/Yjs writes. Errors
+ * fail silent so a flaky lookup never breaks the page.
  */
 export const PageGeneratedOutputs = observer(function PageGeneratedOutputs({
   workspaceSlug,

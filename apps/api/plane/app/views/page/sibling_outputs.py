@@ -4,18 +4,22 @@
 
 """Sibling-outputs reverse-lookup endpoint (app-internal, session-authed).
 
-Mirrors ``plane.app.views.issue.linked_pages.IssueLinkedPagesEndpoint`` but
-walks the PageLog substrate one hop further: instead of "which pages mention
-this issue?" it answers "which OTHER pages mention the same beads this page
-mentions?".
+Surfaces, on an entity "… — what we know" Page, the documents produced about
+that entity (assessments, briefings, digests) — rendered live at request time,
+with NO editor/Yjs writes and no mention-component bookkeeping.
 
-The entity ("what we know") Page and each generated output doc (assessment,
-briefing) both carry a ``<mention-component entity_name="issue"
-entity_identifier="<bead-uuid>">`` that the ``page_transaction`` Celery task
-records as a PageLog row. So two pages that reference the same bead are
-siblings — the entity page and the docs produced about that entity. This
-endpoint surfaces those sibling docs on the entity page at render-time, with
-no editor/Yjs writes.
+The join key is the document naming convention the generation pipeline already
+enforces:
+
+    entity page : "<Entity> — what we know"
+    output docs : "<DocType> — <Entity>"   e.g. "Opportunity Assessment — <Entity>"
+
+So the siblings of "Harmony Fire Limited — what we know" are every Page in the
+same workspace whose name ends with "— Harmony Fire Limited". This is robust for
+our pipeline (docLabel + " — " + target_name) and needs zero per-document
+linking, so it reflects new generations the instant they land — including on
+already-opened (Yjs-persisted) entity pages, where a write-back would never
+surface.
 """
 
 # Third-party imports
@@ -25,56 +29,55 @@ from rest_framework.response import Response
 # Module imports
 from ..base import BaseAPIView
 from plane.app.permissions import ProjectEntityPermission
-from plane.db.models import Page, PageLog
+from plane.db.models import Page
+
+ENTITY_SUFFIX = "— what we know"
 
 
 class PageSiblingOutputsEndpoint(BaseAPIView):
-    """GET other pages that mention the same beads this page mentions."""
+    """GET the generated docs whose name targets this entity page's subject."""
 
     permission_classes = [ProjectEntityPermission]
 
     def get(self, request, slug, project_id, page_id):
         # 404 fast on a bad page id rather than returning an empty array.
-        Page.objects.get(workspace__slug=slug, pk=page_id)
+        page = Page.objects.get(workspace__slug=slug, pk=page_id)
 
-        # Beads (issues) this page mentions.
-        bead_ids = PageLog.objects.filter(
-            page_id=page_id,
-            entity_name="issue",
-        ).values_list("entity_identifier", flat=True)
+        name = (page.name or "").strip()
+        if not name.endswith(ENTITY_SUFFIX):
+            return Response([], status=status.HTTP_200_OK)
+        entity = name[: -len(ENTITY_SUFFIX)].strip()
+        if not entity:
+            return Response([], status=status.HTTP_200_OK)
 
-        # OTHER pages that mention any of those beads.
-        sibling_page_ids = (
-            PageLog.objects.filter(
-                entity_name="issue",
-                entity_identifier__in=list(bead_ids),
-            )
-            .exclude(page_id=page_id)
-            .values_list("page_id", flat=True)
-            .distinct()
-        )
-
-        pages = (
+        # Generated docs are named "<DocType> — <Entity>". The "— " anchor keeps
+        # this from matching a company whose name is a bare suffix of another.
+        siblings = (
             Page.objects.filter(
-                pk__in=sibling_page_ids,
                 workspace__slug=slug,
                 deleted_at__isnull=True,
+                name__endswith=f"— {entity}",
             )
+            .exclude(pk=page_id)
             .order_by("-created_at")
             .distinct()
-            .values("id", "name", "created_at", "updated_at")
+            .prefetch_related("projects")
         )
 
-        return Response(
-            [
+        out = []
+        for p in siblings:
+            proj = p.projects.first()
+            out.append(
                 {
-                    "id": str(p["id"]),
-                    "name": p["name"],
-                    "project_id": str(project_id),
-                    "created_at": p["created_at"],
-                    "updated_at": p["updated_at"],
+                    "id": str(p.id),
+                    "name": p.name,
+                    # Each doc lives in its OWN project (outputs are in COS/REL,
+                    # not the entity page's PIPE) — return the real one so the
+                    # frontend builds a non-404 deep link.
+                    "project_id": str(proj.id) if proj else str(project_id),
+                    "created_at": p.created_at,
+                    "updated_at": p.updated_at,
                 }
-                for p in pages
-            ],
-            status=status.HTTP_200_OK,
-        )
+            )
+
+        return Response(out, status=status.HTTP_200_OK)

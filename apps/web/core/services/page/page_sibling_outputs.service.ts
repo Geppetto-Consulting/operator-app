@@ -17,10 +17,9 @@ export type TPageSiblingOutput = {
 };
 
 /**
- * Sibling-outputs reverse-lookup: which OTHER pages mention the same beads
- * this page mentions? Backed by the PageLog entity-reference table — the
- * entity ("what we know") page and each generated output doc both carry a
- * mention of the same issue/bead, so they are siblings.
+ * Sibling-outputs lookup: the generated docs produced about an entity page's
+ * subject, resolved server-side from the doc naming convention
+ * ("<DocType> — <Entity>" vs the page's "<Entity> — what we know").
  *
  * Endpoint: GET /api/workspaces/<slug>/projects/<pid>/pages/<page_id>/sibling-outputs/
  */
