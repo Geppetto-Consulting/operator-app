@@ -425,6 +425,9 @@ ATTACHMENT_MIME_TYPES = [
     "application/vnd.openxmlformats-officedocument.presentationml.presentation",
     "text/plain",
     "text/markdown",
+    # ENG-347 — rendered HTML artifacts (operator agents store generated
+    # documents — briefings, decks, order forms — as text/html attachments).
+    "text/html",
     "application/rtf",
     "application/vnd.oasis.opendocument.spreadsheet",
     "application/vnd.oasis.opendocument.text",
