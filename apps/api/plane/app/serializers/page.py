@@ -41,6 +41,7 @@ class PageSerializer(BaseSerializer):
             "owned_by",
             "access",
             "color",
+            "page_type",
             "labels",
             "parent",
             "is_favorite",

@@ -57,6 +57,15 @@ class Page(BaseModel):
     external_id = models.CharField(max_length=255, null=True, blank=True)
     external_source = models.CharField(max_length=255, null=True, blank=True)
 
+    # [ours: api] Operator fork — durable page classification for the MCP
+    # (ENG-411). Values: canonical-knowledge | entity | output. Nullable =
+    # untyped / legacy. Intentionally a plain nullable CharField with NO DB-level
+    # choices constraint — validation lives in the MCP / serializer layer so new
+    # types and legacy nulls are both accepted. Previously stored as an HTML
+    # comment in description_html, which validate_html_content strips on the
+    # public API, so it never persisted; this column fixes that.
+    page_type = models.CharField(max_length=32, null=True, blank=True)
+
     class Meta:
         verbose_name = "Page"
         verbose_name_plural = "Pages"

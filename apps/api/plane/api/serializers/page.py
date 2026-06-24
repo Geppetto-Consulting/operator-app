@@ -77,6 +77,7 @@ class PageAPISerializer(BaseSerializer):
             "is_locked",
             "archived_at",
             "color",
+            "page_type",
             "external_id",
             "external_source",
             "workspace",
