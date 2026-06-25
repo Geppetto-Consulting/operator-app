@@ -161,6 +161,28 @@ class Workspace(BaseModel):
     # render time. Demo workspaces (sentio / gordons / stirlight) use this to
     # default to entry_points-only Home.
     home_widget_defaults = models.JSONField(blank=True, default=dict)
+    # [ours: presentation] Operator fork — ENG-389. Per-workspace presentation
+    # config that DRIVES the prospect-facing "demo chrome" treatment (hidden PM
+    # furniture, entity-row → canonical-Page redirects, read-only pages) from
+    # DATA instead of a hardcoded slug allowlist. Replaces the old
+    # `DEMO_WORKSPACE_SLUGS = ["sentio","gordons","stirlight"]` literal that lived
+    # in apps/web/core/constants/demo-workspaces.ts.
+    #
+    # Empty dict (the default for EVERY workspace, including the operator's own)
+    # means NO demo chrome — it is strictly opt-in per workspace. The operator
+    # workspace simply never sets `demo_chrome`, so it can never be de-chromed.
+    #
+    # Shape (when populated):
+    #   {
+    #     "demo_chrome": true,            # hide PM chrome on this workspace
+    #     "entity_project_ids": [...],    # projects whose rows redirect to the
+    #                                     # canonical Page (optional; per ENG-389
+    #                                     # the frontend may still fall back to its
+    #                                     # transitional id list)
+    #   }
+    # Kept a flexible JSON blob so future presentation toggles add a key, not a
+    # column. Written by the MCP `set_presentation_config` admin tool.
+    presentation_config = models.JSONField(blank=True, default=dict)
 
     def __str__(self):
         """Return name of the Workspace"""

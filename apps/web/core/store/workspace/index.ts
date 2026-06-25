@@ -14,6 +14,10 @@ import type {
   IWorkspaceSidebarNavigation,
   IWorkspaceUserPropertiesResponse,
 } from "@plane/types";
+// constants
+// [ours: presentation] ENG-389 — mirror each workspace's presentation_config into
+// the demo-chrome registry so the slug-only isDemoWorkspace() gate is data-driven.
+import { registerWorkspacePresentationConfig } from "@/constants/demo-workspaces";
 // services
 import { WorkspaceService } from "@/services/workspace.service";
 // store
@@ -186,6 +190,8 @@ export abstract class BaseWorkspaceRootStore implements IWorkspaceRootStore {
       runInAction(() => {
         workspaceResponse.forEach((workspace) => {
           set(this.workspaces, [workspace.id], workspace);
+          // [ours: presentation] ENG-389 — keep the demo-chrome registry in sync.
+          registerWorkspacePresentationConfig(workspace.slug, workspace.presentation_config);
         });
       });
       return workspaceResponse;
@@ -202,6 +208,8 @@ export abstract class BaseWorkspaceRootStore implements IWorkspaceRootStore {
     await this.workspaceService.createWorkspace(data).then((response) => {
       runInAction(() => {
         this.workspaces = set(this.workspaces, response.id, response);
+        // [ours: presentation] ENG-389 — keep the demo-chrome registry in sync.
+        registerWorkspacePresentationConfig(response.slug, response.presentation_config);
       });
       return response;
     });
@@ -218,6 +226,12 @@ export abstract class BaseWorkspaceRootStore implements IWorkspaceRootStore {
           Object.keys(data).forEach((key) => {
             set(this.workspaces, [res.id, key], data[key as keyof IWorkspace]);
           });
+          // [ours: presentation] ENG-389 — keep the demo-chrome registry in sync
+          // if presentation_config changed in this update.
+          if ("presentation_config" in data) {
+            const slug = this.workspaces[res.id]?.slug;
+            registerWorkspacePresentationConfig(slug, this.workspaces[res.id]?.presentation_config);
+          }
         });
       }
       return res;

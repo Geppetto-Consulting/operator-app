@@ -46,6 +46,23 @@ export interface IWorkspace {
   // for new users). Populated object overrides per-key is_enabled +
   // widget-specific config (e.g. entry_points.cards).
   home_widget_defaults: Record<string, IWorkspaceHomeWidgetDefault>;
+  // [ours: presentation] Operator fork — ENG-389. Per-workspace presentation
+  // config that DRIVES the prospect-facing demo-chrome treatment from DATA
+  // instead of a hardcoded slug allowlist. Empty/absent ⇒ NO demo chrome
+  // (strictly opt-in; the operator's own workspace never sets demo_chrome).
+  presentation_config?: IWorkspacePresentationConfig;
+}
+
+// [ours: presentation] ENG-389. Per-workspace presentation toggles carried on
+// IWorkspace.presentation_config. `demo_chrome` opts a workspace into the
+// prospect-facing de-chromed treatment (hidden PM furniture, entity-row →
+// canonical-Page redirects, read-only pages). `entity_project_ids` optionally
+// lists the projects whose rows redirect to their canonical Page. Flexible
+// blob — future presentation toggles add a key, not a type break.
+export interface IWorkspacePresentationConfig {
+  demo_chrome?: boolean;
+  entity_project_ids?: string[];
+  [key: string]: unknown;
 }
 
 // [ours: workspace-brand] ENG-290. Per-widget override carried on
