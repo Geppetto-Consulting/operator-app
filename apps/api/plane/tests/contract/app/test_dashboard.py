@@ -18,8 +18,11 @@ from rest_framework import status
 
 from plane.db.models import (
     Issue,
+    IssueView,
+    Page,
     Project,
     ProjectMember,
+    ProjectPage,
     State,
     User,
     WorkspaceMember,
@@ -838,3 +841,463 @@ class TestDashboardPermissions:
             status.HTTP_403_FORBIDDEN,
             status.HTTP_404_NOT_FOUND,
         )
+
+
+# =============================================================================
+# ENG-270 — workspace-purpose widgets (views_list / pages_by_type / quick_actions
+# / banner / recent_pages)
+# =============================================================================
+
+
+@pytest.mark.contract
+class TestViewsListWidget:
+    """ENG-270 — views_list: clickable list of saved Views."""
+
+    @pytest.mark.django_db
+    def test_views_list_returns_project_views(
+        self, session_client, workspace, project, create_user
+    ):
+        """Default mode (no view_ids, no project_id) returns all Views on the
+        dashboard's project, ordered by sort_order then name."""
+        IssueView.objects.create(
+            name="Building products",
+            workspace=workspace,
+            project=project,
+            owned_by=create_user,
+            created_by=create_user,
+        )
+        IssueView.objects.create(
+            name="Construction",
+            workspace=workspace,
+            project=project,
+            owned_by=create_user,
+            created_by=create_user,
+        )
+
+        project.dashboard_config = {
+            "widgets": [{"id": "wv", "type": "views_list", "title": "Sectors"}],
+        }
+        project.save(update_fields=["dashboard_config"])
+
+        response = session_client.get(_dashboard_url(workspace.slug, project.id))
+        assert response.status_code == status.HTTP_200_OK
+        widget = response.data["widgets"]["wv"]
+        assert widget["type"] == "views_list"
+        views = widget["data"]["views"]
+        assert len(views) == 2
+        # Each view carries the fields the frontend needs to build a link.
+        for v in views:
+            assert "id" in v and "name" in v
+            assert v["workspace_slug"] == workspace.slug
+            assert v["project_id"] == str(project.id)
+
+    @pytest.mark.django_db
+    def test_views_list_filters_by_name_prefix(
+        self, session_client, workspace, project, create_user
+    ):
+        """`filter.name_prefix` restricts to Views whose name starts with the
+        prefix (case-insensitive)."""
+        IssueView.objects.create(
+            name="Sector — Building products",
+            workspace=workspace,
+            project=project,
+            owned_by=create_user,
+            created_by=create_user,
+        )
+        IssueView.objects.create(
+            name="All targets",
+            workspace=workspace,
+            project=project,
+            owned_by=create_user,
+            created_by=create_user,
+        )
+
+        project.dashboard_config = {
+            "widgets": [
+                {
+                    "id": "wv",
+                    "type": "views_list",
+                    "title": "Sectors",
+                    "filter": {"name_prefix": "Sector — "},
+                }
+            ],
+        }
+        project.save(update_fields=["dashboard_config"])
+
+        response = session_client.get(_dashboard_url(workspace.slug, project.id))
+        views = response.data["widgets"]["wv"]["data"]["views"]
+        assert len(views) == 1
+        assert views[0]["name"].startswith("Sector — ")
+
+    @pytest.mark.django_db
+    def test_views_list_explicit_view_ids_preserves_order(
+        self, session_client, workspace, project, create_user
+    ):
+        """`view_ids` pins an exact ordered list — handy for hand-curated
+        landing dashboards."""
+        a = IssueView.objects.create(
+            name="A", workspace=workspace, project=project,
+            owned_by=create_user, created_by=create_user,
+        )
+        b = IssueView.objects.create(
+            name="B", workspace=workspace, project=project,
+            owned_by=create_user, created_by=create_user,
+        )
+
+        project.dashboard_config = {
+            "widgets": [
+                {
+                    "id": "wv",
+                    "type": "views_list",
+                    "title": "Pinned",
+                    "view_ids": [str(b.id), str(a.id)],
+                }
+            ],
+        }
+        project.save(update_fields=["dashboard_config"])
+
+        response = session_client.get(_dashboard_url(workspace.slug, project.id))
+        views = response.data["widgets"]["wv"]["data"]["views"]
+        # Order matches the caller's view_ids list.
+        assert [v["id"] for v in views] == [str(b.id), str(a.id)]
+
+    @pytest.mark.django_db
+    def test_views_list_empty_returns_empty_array(
+        self, session_client, workspace, project
+    ):
+        """No Views in the project → empty list (frontend renders empty state)."""
+        project.dashboard_config = {
+            "widgets": [{"id": "wv", "type": "views_list", "title": "Views"}],
+        }
+        project.save(update_fields=["dashboard_config"])
+
+        response = session_client.get(_dashboard_url(workspace.slug, project.id))
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["widgets"]["wv"]["data"]["views"] == []
+
+
+@pytest.mark.contract
+class TestPagesByTypeWidget:
+    """ENG-270 — pages_by_type: Pages partitioned by name-prefix groups."""
+
+    @pytest.mark.django_db
+    def test_pages_by_type_partitions_by_prefix(
+        self, session_client, workspace, project, create_user
+    ):
+        """Pages whose name starts with each group's name_prefix land in that
+        group. First-match-wins so a page isn't duplicated across groups."""
+        # 2 Acquisition Assessment, 1 sector map, 1 unrelated.
+        names = [
+            "Acquisition Assessment — Acme Ltd",
+            "Acquisition Assessment — Beta Co",
+            "sector map — Building products",
+            "Untitled draft",
+        ]
+        for name in names:
+            page = Page.objects.create(
+                name=name,
+                workspace=workspace,
+                owned_by=create_user,
+                created_by=create_user,
+            )
+            ProjectPage.objects.create(
+                project=project, page=page, workspace=workspace, created_by=create_user,
+            )
+
+        project.dashboard_config = {
+            "widgets": [
+                {
+                    "id": "wp",
+                    "type": "pages_by_type",
+                    "title": "Workspace content",
+                    "groups": [
+                        {"title": "Acquisition Assessments", "name_prefix": "Acquisition Assessment"},
+                        {"title": "Sector maps", "name_prefix": "sector map"},
+                    ],
+                }
+            ],
+        }
+        project.save(update_fields=["dashboard_config"])
+
+        response = session_client.get(_dashboard_url(workspace.slug, project.id))
+        assert response.status_code == status.HTTP_200_OK
+        widget = response.data["widgets"]["wp"]
+        assert widget["type"] == "pages_by_type"
+        groups = widget["data"]["groups"]
+        assert len(groups) == 2
+        by_title = {g["title"]: g for g in groups}
+        assert len(by_title["Acquisition Assessments"]["pages"]) == 2
+        assert len(by_title["Sector maps"]["pages"]) == 1
+        assert widget["data"]["workspace_slug"] == workspace.slug
+
+    @pytest.mark.django_db
+    def test_pages_by_type_match_all_catches_remainder(
+        self, session_client, workspace, project, create_user
+    ):
+        """A group with match_all=true catches pages not claimed by an
+        earlier group (first-match-wins, so no duplication)."""
+        for name in ["Acquisition Assessment — A", "Other note 1", "Other note 2"]:
+            page = Page.objects.create(
+                name=name,
+                workspace=workspace,
+                owned_by=create_user,
+                created_by=create_user,
+            )
+            ProjectPage.objects.create(
+                project=project, page=page, workspace=workspace, created_by=create_user,
+            )
+
+        project.dashboard_config = {
+            "widgets": [
+                {
+                    "id": "wp",
+                    "type": "pages_by_type",
+                    "title": "Catalogue",
+                    "groups": [
+                        {"title": "Assessments", "name_prefix": "Acquisition Assessment"},
+                        {"title": "Everything else", "match_all": True},
+                    ],
+                }
+            ],
+        }
+        project.save(update_fields=["dashboard_config"])
+
+        response = session_client.get(_dashboard_url(workspace.slug, project.id))
+        groups = response.data["widgets"]["wp"]["data"]["groups"]
+        by_title = {g["title"]: g for g in groups}
+        assert len(by_title["Assessments"]["pages"]) == 1
+        # Two "Other note" pages picked up by match_all — Assessment NOT duplicated.
+        assert len(by_title["Everything else"]["pages"]) == 2
+        all_names = [p["name"] for p in by_title["Everything else"]["pages"]]
+        assert all("Acquisition Assessment" not in n for n in all_names)
+
+    @pytest.mark.django_db
+    def test_pages_by_type_empty_groups_returns_empty(
+        self, session_client, workspace, project
+    ):
+        """No groups configured → empty groups list, no error."""
+        project.dashboard_config = {
+            "widgets": [
+                {"id": "wp", "type": "pages_by_type", "title": "Empty", "groups": []}
+            ],
+        }
+        project.save(update_fields=["dashboard_config"])
+
+        response = session_client.get(_dashboard_url(workspace.slug, project.id))
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["widgets"]["wp"]["data"]["groups"] == []
+
+
+@pytest.mark.contract
+class TestQuickActionsWidget:
+    """ENG-270 — quick_actions: clickable button row (pass-through)."""
+
+    @pytest.mark.django_db
+    def test_quick_actions_passes_through_valid_entries(
+        self, session_client, workspace, project
+    ):
+        """Each action with both label + url surfaces; icon + style + description
+        are optional metadata."""
+        project.dashboard_config = {
+            "widgets": [
+                {
+                    "id": "wa",
+                    "type": "quick_actions",
+                    "title": "Quick actions",
+                    "actions": [
+                        {
+                            "label": "Trigger Acquisition Assessment",
+                            "url": "https://mcp.promptable.co.uk/trigger?…",
+                            "icon": "🚀",
+                            "style": "primary",
+                            "description": "Runs the full pipeline",
+                        },
+                        {"label": "Open docs", "url": "https://operator.promptable.co.uk"},
+                    ],
+                }
+            ],
+        }
+        project.save(update_fields=["dashboard_config"])
+
+        response = session_client.get(_dashboard_url(workspace.slug, project.id))
+        assert response.status_code == status.HTTP_200_OK
+        widget = response.data["widgets"]["wa"]
+        assert widget["type"] == "quick_actions"
+        actions = widget["data"]["actions"]
+        assert len(actions) == 2
+        assert actions[0]["icon"] == "🚀"
+        assert actions[0]["style"] == "primary"
+        assert actions[0]["description"] == "Runs the full pipeline"
+        # Second action has only the required fields — no extras leak through.
+        assert "icon" not in actions[1]
+
+    @pytest.mark.django_db
+    def test_quick_actions_drops_invalid_entries(
+        self, session_client, workspace, project
+    ):
+        """Actions missing label or url are silently dropped rather than
+        rendered as broken buttons."""
+        project.dashboard_config = {
+            "widgets": [
+                {
+                    "id": "wa",
+                    "type": "quick_actions",
+                    "title": "Actions",
+                    "actions": [
+                        {"label": "No URL"},
+                        {"url": "https://example.com"},
+                        {"label": "OK", "url": "https://example.com"},
+                        "not-an-object",
+                    ],
+                }
+            ],
+        }
+        project.save(update_fields=["dashboard_config"])
+
+        response = session_client.get(_dashboard_url(workspace.slug, project.id))
+        actions = response.data["widgets"]["wa"]["data"]["actions"]
+        assert len(actions) == 1
+        assert actions[0]["label"] == "OK"
+
+
+@pytest.mark.contract
+class TestBannerWidget:
+    """ENG-270 — banner: markdown/HTML header card (pass-through)."""
+
+    @pytest.mark.django_db
+    def test_banner_passes_through_fields(
+        self, session_client, workspace, project
+    ):
+        """title / subtitle / body_html / tone surface verbatim. body_html is
+        rendered client-side via dangerouslySetInnerHTML — operator-trusted
+        config, not user-input."""
+        project.dashboard_config = {
+            "widgets": [
+                {
+                    "id": "wb",
+                    "type": "banner",
+                    "title": "Sentio — M&A Origination",
+                    "subtitle": "Active mandates and signals",
+                    "body_html": "<p>Five new widgets render here.</p>",
+                    "tone": "info",
+                }
+            ],
+        }
+        project.save(update_fields=["dashboard_config"])
+
+        response = session_client.get(_dashboard_url(workspace.slug, project.id))
+        assert response.status_code == status.HTTP_200_OK
+        widget = response.data["widgets"]["wb"]
+        assert widget["type"] == "banner"
+        data = widget["data"]
+        assert data["title"] == "Sentio — M&A Origination"
+        assert data["subtitle"] == "Active mandates and signals"
+        assert data["body_html"] == "<p>Five new widgets render here.</p>"
+        assert data["tone"] == "info"
+
+    @pytest.mark.django_db
+    def test_banner_defaults_unknown_tone_to_neutral(
+        self, session_client, workspace, project
+    ):
+        """An unknown tone falls back to neutral so the frontend always has
+        a known styling token."""
+        project.dashboard_config = {
+            "widgets": [
+                {"id": "wb", "type": "banner", "title": "Hi", "tone": "rainbow"}
+            ],
+        }
+        project.save(update_fields=["dashboard_config"])
+
+        response = session_client.get(_dashboard_url(workspace.slug, project.id))
+        assert response.data["widgets"]["wb"]["data"]["tone"] == "neutral"
+
+
+@pytest.mark.contract
+class TestRecentPagesWidget:
+    """ENG-270 — recent_pages: newest N Pages with optional name filter."""
+
+    @pytest.mark.django_db
+    def test_recent_pages_orders_newest_first(
+        self, session_client, workspace, project, create_user
+    ):
+        """Pages are ordered by -updated_at, newest first, limited to `limit`."""
+        for name in ["First", "Second", "Third"]:
+            p = Page.objects.create(
+                name=name,
+                workspace=workspace,
+                owned_by=create_user,
+                created_by=create_user,
+            )
+            ProjectPage.objects.create(
+                project=project, page=p, workspace=workspace, created_by=create_user,
+            )
+
+        project.dashboard_config = {
+            "widgets": [
+                {"id": "wr", "type": "recent_pages", "title": "Recent", "limit": 2}
+            ],
+        }
+        project.save(update_fields=["dashboard_config"])
+
+        response = session_client.get(_dashboard_url(workspace.slug, project.id))
+        assert response.status_code == status.HTTP_200_OK
+        widget = response.data["widgets"]["wr"]
+        assert widget["type"] == "recent_pages"
+        pages = widget["data"]["pages"]
+        # limit=2 honored; ordered newest-first (Third was created last).
+        assert len(pages) == 2
+        assert pages[0]["name"] == "Third"
+        assert pages[1]["name"] == "Second"
+        # Workspace slug + project id surfaced for link building.
+        assert widget["data"]["workspace_slug"] == workspace.slug
+        assert widget["data"]["project_id"] == str(project.id)
+
+    @pytest.mark.django_db
+    def test_recent_pages_name_filter_restricts_results(
+        self, session_client, workspace, project, create_user
+    ):
+        """name_filter does a case-insensitive icontains match."""
+        for name in ["Acquisition Assessment — Acme", "Random note", "Acquisition Assessment — Beta"]:
+            p = Page.objects.create(
+                name=name,
+                workspace=workspace,
+                owned_by=create_user,
+                created_by=create_user,
+            )
+            ProjectPage.objects.create(
+                project=project, page=p, workspace=workspace, created_by=create_user,
+            )
+
+        project.dashboard_config = {
+            "widgets": [
+                {
+                    "id": "wr",
+                    "type": "recent_pages",
+                    "title": "Acquisitions",
+                    "name_filter": "Acquisition Assessment",
+                    "limit": 10,
+                }
+            ],
+        }
+        project.save(update_fields=["dashboard_config"])
+
+        response = session_client.get(_dashboard_url(workspace.slug, project.id))
+        pages = response.data["widgets"]["wr"]["data"]["pages"]
+        assert len(pages) == 2
+        assert all("Acquisition Assessment" in p["name"] for p in pages)
+
+    @pytest.mark.django_db
+    def test_recent_pages_empty_returns_empty(
+        self, session_client, workspace, project
+    ):
+        """No Pages at all → empty list, no error."""
+        project.dashboard_config = {
+            "widgets": [
+                {"id": "wr", "type": "recent_pages", "title": "Recent", "limit": 5}
+            ],
+        }
+        project.save(update_fields=["dashboard_config"])
+
+        response = session_client.get(_dashboard_url(workspace.slug, project.id))
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["widgets"]["wr"]["data"]["pages"] == []

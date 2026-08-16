@@ -40,6 +40,32 @@ export interface IWorkspace {
   // `--brand-default` CSS var from packages/tailwind-config/variables.css).
   brand_color: string | null;
   brand_name_override: string | null;
+  // [ours: workspace-brand] Operator fork — ENG-290. Per-workspace overrides
+  // for the workspace Home page's widget defaults. Empty object ⇒ Plane's
+  // stock seeding applies (quick_links / recents / my_stickies all enabled
+  // for new users). Populated object overrides per-key is_enabled +
+  // widget-specific config (e.g. entry_points.cards).
+  home_widget_defaults: Record<string, IWorkspaceHomeWidgetDefault>;
+}
+
+// [ours: workspace-brand] ENG-290. Per-widget override carried on
+// IWorkspace.home_widget_defaults. `is_enabled` controls seeding for new
+// users; any other key is widget-specific (e.g. entry_points reads `cards`).
+export interface IWorkspaceHomeWidgetDefault {
+  is_enabled?: boolean;
+  cards?: IWorkspaceHomeEntryPointCard[];
+  [key: string]: unknown;
+}
+
+// [ours: workspace-brand] ENG-290. One large clickable card in the
+// entry_points widget — a curated "pick where to start" landing for demo
+// workspaces. `description` and `icon` are optional; `url` is workspace-
+// relative (the widget prepends the workspace slug if missing).
+export interface IWorkspaceHomeEntryPointCard {
+  label: string;
+  url: string;
+  description?: string;
+  icon?: string;
 }
 
 export interface IWorkspaceLite {
